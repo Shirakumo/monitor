@@ -1,5 +1,43 @@
 (in-package #:monitor)
 
+(defvar *measurements* (make-hash-table :test 'eql))
+(defparameter *series-type-map*
+  (map 'vector (lambda (x)
+                 (or (find-symbol (string x) '#:org.shirakumo.machine-state.measurements)
+                     (error "No measurement named ~a" x)))
+       #(storage-io
+         storage-read
+         storage-write
+         storage-%
+         storage-free
+         storage-used
+         storage-total
+         network-io
+         network-read
+         network-write
+         memory-%
+         memory-free
+         memory-used
+         memory-total
+         uptime
+         cpu-%
+         cpu-idle
+         cpu-busy
+         heap-%
+         heap-free
+         heap-used
+         heap-total
+         process-busy
+         process-size
+         process-io
+         process-read
+         process-write
+         gc-busy
+         gpu-%
+         gpu-free
+         gpu-used
+         gpu-busy)))
+
 (define-trigger db:connected ()
   (db:create 'datapoints
              '((series (:id series))
@@ -8,100 +46,120 @@
              :indices '(series time))
 
   (db:create 'series
-             '((title (:varchar 32))
-               (interval (:integer 4))
-               (type (:integer 1)))
+             '((title (:varchar 64))
+               (interval :float)
+               (type (:integer 2))
+               (arguments (:varchar 256)))
              :indices '(title))
 
-  (db:create 'series/disk
-             '((series (:id series))
-               (path (:varchar 256)))
-             :indices '(series))
-
-  (db:create 'series/cpu
-             '((series (:id series))
-               (core (:integer 4)))
-             :indices '(series))
-
-  (db:create 'series/net
-             '((series (:id series))
-               (device (:varchar 32)))
-             :indices '(series))
-
   (db:create 'alerts
-             '((series (:id series))
+             '((title (:varchar 64))
+               (series (:id series))
                (threshold :float)
-               (streak (:integer 4))
+               (duration :float)
+               (trigger-time :float)
+               (last-check :float))
+             :indices '(series title))
+
+  (db:create 'alert/subscribers
+             '((alert (:id alerts))
                (email (:varchar 128)))
-             :indices '(series)))
+             :indices '(alert email)))
 
-(defparameter *series-type-map*
-  #(:cpu
-    :ram-percentage
-    :ram-used-bytes
-    :ram-free-bytes
-    :disk-percentage
-    :disk-used-bytes
-    :disk-free-bytes
-    :disk-io
-    :net-io
-    :uptime))
+(defun measurement->id (type)
+  (or (position type *series-type-map* :test #'string-equal)
+      (error "No such measurement type ~s" type)))
 
-(defun series-type->id (type)
-  (position type *series-type-map*))
-
-(defun id->series-type (id)
+(defun id->measurement (id)
   (elt id *series-type-map*))
 
-(defgeneric measure (type &key))
+(defun load-measurement (series)
+  (setf (gethash (dm:id series) *measurements*)
+        (apply (id->measurement (dm:field series "type"))
+               (read-from-string (dm:field series "arguments")))))
 
-(defun decode-type-args (type dm)
-  (case type
-    (:cpu
-     (list :core-mask (dm:field dm "core-mask")))
-    ((:disk-io :disk-percentage :disk-used-bytes :disk-free-bytes)
-     (list :path (dm:field dm "path")))
-    (:net
-     (list :device (dm:field dm "device")))))
+(defun list-series ()
+  (dm:get 'series (db:query :all) :order '(("title" . :DESC))))
 
-(defmethod measure ((dm dm:data-model) &key)
-  (let ((type (id->series-type (dm:field dm "type"))))
-    (apply #'measure type (decode-type-args type dm))))
+(defun ensure-series (series-ish &optional (errorp T))
+  (or (typecase series-ish
+        (db:id
+         (dm:get-one 'series (db:query (:= '_id series-ish))))
+        (dm:data-model
+         (ecase (dm:collection series-ish)
+           (series series-ish)
+           (alerts (ensure-series (dm:field series-ish "series")))
+           (datapoints (ensure-series (dm:field series-ish "series")))))
+        (string
+         (dm:get-one 'series (db:query (:= 'title series-ish)))))
+      (when errorp (error "No such series ~a" series-ish))))
 
-(defmacro define-measurement (type args &body body)
-  `(defmethod measure ((type (eql ,type)) &key ,@args)
-     ,@body))
+(defun add-series (type &key (title (string-downcase type)) (interval 1.0) arguments)
+  (let ((series (dm:hull 'series)))
+    (setf (dm:field series "title") title)
+    (setf (dm:field series "interval") (float interval 1f0))
+    (setf (dm:field series "type") (measurement->id type))
+    (setf (dm:field series "arguments") (prin1-to-string arguments))
+    (dm:insert series)
+    (values series (load-measurement series))))
 
-(define-measurement :cpu ((core T))
-  (machine-state:core-utilization core))
+(defun remove-series (series)
+  (let ((id (ensure-id series)))
+    (db:with-transaction ()
+      (db:delete 'datapoints (db:query (:= 'series id)))
+      (db:delete 'alerts (db:query (:= 'series id)))
+      (db:delete 'series (db:query (:= '_id id))))
+    (remhash id *measurements*)))
 
-(define-measurement :ram-percentage ()
-  (multiple-value-bind (used total) (machine-state:machine-room)
-    (* 100f0 (/ used total))))
+(defun perform-measurement (series)
+  (let* ((ensure-series series)
+         (measurement (gethash (dm:id series) *measurements*))
+         (value (measurements:measure measurement)))
+    (db:insert 'datapoints `(("series" . ,(dm:id series))
+                             ("time" . ,(float (precise-time:get-precise-time/double) 0f0))
+                             ("value" . ,(float value 0f0))))))
 
-(define-measurement :ram-used-bytes ()
-  (values (machine-state:machine-room)))
+(defun load-measurements ()
+  (mapcar #'load-measurement (list-series)))
 
-(define-measurement :ram-free-bytes ()
-  (multiple-value-bind (used total) (machine-state:machine-room)
-    (- total used)))
+(defun perform-measurements ()
+  (mapcar #'perform-measurement (list-series)))
 
-(define-measurement :disk-percentage ((path "/"))
-  (multiple-value-bind (free total) (machine-state:storage-room path)
-    (* 100f0 (/ (- total free) total))))
+(defun list-alerts ()
+  (dm:get 'alert (db:query :all) :order '(("title" . :DESC))))
 
-(define-measurement :disk-used-bytes ((path "/"))
-  (multiple-value-bind (free total) (machine-state:storage-room path)
-    (- total free)))
+(defun ensure-alert (alert-ish &optional (errorp T))
+  (or (typecase alert-ish
+        (db:id
+         (dm:get-one 'alert (db:query (:= '_id alert-ish))))
+        (dm:data-model
+         (ecase (dm:collection alert-ish)
+           (alert alert-ish)
+           (alert/subscribers (ensure-alert (dm:field alert-ish "alert")))))
+        (string
+         (dm:get-one 'alert (db:query (:= 'title alert-ish)))))
+      (when errorp (error "No such alert ~a" alert-ish))))
 
-(define-measurement :disk-free-bytes ((path "/"))
-  (values (machine-state:storage-room path)))
+(defun add-alert (series threshold &key title (duration 0.0) emails)
+  (let ((alert (dm:hull 'alert)))
+    (setf (dm:field alert "series") (ensure-id series))
+    (setf (dm:field alert "title") (or title (dm:field (ensure-series series) "title")))
+    (setf (dm:field alert "threshold") (float threshold 0f0))
+    (setf (dm:field alert "duration") (float duration 0f0))
+    (dm:insert alert)
+    (dolist (email emails alert)
+      (add-subscription alert email))))
 
-(define-measurement :disk-io ((path "/"))
-  )
+(defun remove-alert (alert)
+  (let ((id (ensure-id alert)))
+    (db:with-transction ()
+      (db:delete 'alert/subscribers (db:query (:= 'alert id)))
+      (db:delete 'alerts (db:query (:= '_id id))))))
 
-(define-measurement :net-io ((device "enp1s0"))
-  )
+(defun add-subscription (alert email)
+  (db:insert 'alert/subscribers `(("alert" . ,(ensure-id alert))
+                                  ("email" . ,(string-downcase email)))))
 
-(define-measurement :uptime ()
-  (machine-state:machine-uptime))
+(defun remove-subscription (alert email)
+  (db:delete 'alert/subscribers (db:query (:and (:= alert (ensure-id alert))
+                                                (:= email (string-downcase email))))))

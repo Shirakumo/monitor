@@ -5,12 +5,15 @@
   :version "0.0.0"
   :components ((:file "module")
                (:file "db")
+               (:file "alert")
                (:file "front")
                (:file "api"))
   :depends-on ((:interface :database)
                (:interface :auth)
                (:interface :mail)
                (:interface :relational-database)
+               :machine-measurements
+               :precise-time
                :r-data-model
                :r-oauth
                :r-clip
