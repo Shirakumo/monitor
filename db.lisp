@@ -106,9 +106,9 @@
 (defun remove-series (series)
   (let ((id (ensure-id series)))
     (db:with-transaction ()
-      (db:delete 'datapoints (db:query (:= 'series id)))
-      (db:delete 'alerts (db:query (:= 'series id)))
-      (db:delete 'series (db:query (:= '_id id))))
+      (db:remove 'datapoints (db:query (:= 'series id)))
+      (db:remove 'alerts (db:query (:= 'series id)))
+      (db:remove 'series (db:query (:= '_id id))))
     (remhash id *measurements*)))
 
 (defun perform-measurement (series)
@@ -152,14 +152,14 @@
 
 (defun remove-alert (alert)
   (let ((id (ensure-id alert)))
-    (db:with-transction ()
-      (db:delete 'alert/subscribers (db:query (:= 'alert id)))
-      (db:delete 'alerts (db:query (:= '_id id))))))
+    (db:with-transaction ()
+      (db:remove 'alert/subscribers (db:query (:= 'alert id)))
+      (db:remove 'alerts (db:query (:= '_id id))))))
 
 (defun add-subscription (alert email)
   (db:insert 'alert/subscribers `(("alert" . ,(ensure-id alert))
                                   ("email" . ,(string-downcase email)))))
 
 (defun remove-subscription (alert email)
-  (db:delete 'alert/subscribers (db:query (:and (:= alert (ensure-id alert))
+  (db:remove 'alert/subscribers (db:query (:and (:= alert (ensure-id alert))
                                                 (:= email (string-downcase email))))))
