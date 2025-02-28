@@ -1,12 +1,58 @@
 (in-package #:monitor)
 
-(defun send-alert (email alert datapoints &key (direction :trigger-up))
-  ())
+(defun compile-mail (subscriber &rest args)
+  (apply #'r-clip:process
+         (@template "email.ctml")
+         :subscriber (dm:field subscriber "name")
+         :email (dm:field subscriber "email")
+         :copyright (config :copyright)
+         :software-title (config :title)
+         :software-version (load-time-value (asdf:component-version (asdf:find-system :monitor)))
+         :datapoints datapoints
+         args))
+
+(defun compile-alert-mail (alert datapoints direction &rest args)
+  (let ((title (dm:field alert "title"))
+        (series (dm:field (ensure-series alert) "title")))
+    (apply #'compile-mail
+           :time (get-universal-time)
+           :alert title
+           :series series
+           :threshold (dm:field alert "threshold")
+           :duration (dm:field alert "duration")
+           :trigger-time (dm:field alert "trigger-time")
+           :datapoints datapoints
+           :body (plump:parse
+                  (ecase direction
+                    (:trigger-up (@template "alert-up.ctml"))
+                    (:trigger-down (@template "alert-down.ctml"))))
+           :subject (ecase direction
+                      (:trigger-up (format NIL "Alert ~a" title))
+                      (:trigger-down (format NIL "Alert ~a resolved" title)))
+           :series-url (series-url (dm:field alert "series"))
+           :alert-url (alert-url (dm:id alert))
+           args)))
+
+(defun extract-plaintext (html)
+  ;; KLUDGE: This is real dumb.
+  ;; FIXME: links do not get retained
+  (with-output-to-string (out)
+    (lquery:$ html "body" (text) (each (lambda (text) (write-line text out))))))
+
+(defun extract-subject (html)
+  (lquery:$1 html "head title" (text)))
+
+(defun send-alert (subscriber alert datapoints &key (direction :trigger-up))
+  (let* ((html (compile-alert-email subscriber alert datapoints direction))
+         (text (extract-plaintext html))
+         (subject (extract-subject html))
+         (email (gethash subscriber "email")))
+    (l:trace :monitor.alert "Sending alert mail to ~a" email)
+    (mail:send email subject text :html (plump:serialize html NIL))))
 
 (defun send-alerts (alert datapoints &rest args &key &allow-other-keys)
-  (dolist (email (db:select 'alert/subscribers (db:query (:= 'alert (dm:id alert)))
-                            :fields '("email")))
-    (apply #'send-alert (gethash "email" email) alert datapoints args)))
+  (dolist (subscriber (db:select 'alert/subscribers (db:query (:= 'alert (dm:id alert)))))
+    (apply #'send-alert subscriber alert datapoints args)))
 
 (defun longest-streak (sequence check)
   ;; Compute the longest consecutive subsequence of elements that passes CHECK

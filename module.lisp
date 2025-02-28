@@ -9,4 +9,6 @@
 (in-package #:monitor)
 
 (define-trigger startup ()
-  (defaulted-config (make-random-string 32) :private-key))
+  (defaulted-config (make-random-string 32) :private-key)
+  (defaulted-config "Monitor" :title)
+  (defaulted-config "Shirakumo" :copyright))

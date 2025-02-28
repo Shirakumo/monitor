@@ -36,7 +36,9 @@
          gpu-%
          gpu-free
          gpu-used
-         gpu-busy)))
+         gpu-busy
+         battery-%
+         battery-charge)))
 
 (define-trigger db:connected ()
   (db:create 'datapoints
@@ -63,6 +65,7 @@
 
   (db:create 'alert/subscribers
              '((alert (:id alerts))
+               (name (:varchar 64))
                (email (:varchar 128)))
              :indices '(alert email)))
 
@@ -156,8 +159,9 @@
       (db:remove 'alert/subscribers (db:query (:= 'alert id)))
       (db:remove 'alerts (db:query (:= '_id id))))))
 
-(defun add-subscription (alert email)
+(defun add-subscription (alert email name)
   (db:insert 'alert/subscribers `(("alert" . ,(ensure-id alert))
+                                  ("name" . ,name)
                                   ("email" . ,(string-downcase email)))))
 
 (defun remove-subscription (alert email)
