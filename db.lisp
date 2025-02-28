@@ -128,6 +128,16 @@
 (defun perform-measurements ()
   (mapcar #'perform-measurement (list-series)))
 
+(defun list-measurements (series &key since count before)
+  (let* ((series (ensure-series series))
+         (before (or before (precise-time:get-precise-time/double)))
+         (since (or since (- before (* count (dm:field series "interval"))))))
+    (db:select 'datapoints (db:query (:and (:= 'series (dm:id series))
+                                           (:<= (float since 0d0) 'time)
+                                           (:<= 'time (float before 0d0))))
+               :sort '(("time" . :ASC))
+               :amount count)))
+
 (defun list-alerts ()
   (dm:get 'alert (db:query :all) :order '(("title" . :DESC))))
 
@@ -146,7 +156,7 @@
 (defun add-alert (series threshold &key title (duration 0.0) emails)
   (let ((alert (dm:hull 'alert)))
     (setf (dm:field alert "series") (ensure-id series))
-    (setf (dm:field alert "title") (or title (dm:field (ensure-series series) "title")))
+    (setf (dm:field alert "title") (or* title (dm:field (ensure-series series) "title")))
     (setf (dm:field alert "threshold") (float threshold 0f0))
     (setf (dm:field alert "duration") (float duration 0f0))
     (dm:insert alert)
@@ -159,7 +169,10 @@
       (db:remove 'alert/subscribers (db:query (:= 'alert id)))
       (db:remove 'alerts (db:query (:= '_id id))))))
 
-(defun add-subscription (alert email name)
+(defun list-subscriptions (alert)
+  (dm:get 'alert/subscribers (db:query (:= 'alert (dm:id (ensure-alert alert))))))
+
+(defun add-subscription (alert email &optional (name email))
   (db:insert 'alert/subscribers `(("alert" . ,(ensure-id alert))
                                   ("name" . ,name)
                                   ("email" . ,(string-downcase email)))))

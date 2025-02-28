@@ -14,6 +14,8 @@
                (:interface :relational-database)
                :machine-measurements
                :precise-time
+               :fuzzy-dates
+               :parse-float
                :r-data-model
                :r-oauth
                :r-clip
