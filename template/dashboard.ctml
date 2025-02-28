@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title><c:s>title</c:s> Dashboard</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="viewport" content="width=device-width"/>
+    <link rel="stylesheet" @href="monitor/static/monitor/style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous"/>
+    <link rel="api-root" @href="monitor/api/monitor/"/>
+  </head>
+  <body>
+    <header>
+      <h1><c:s>title</c:s></h1>
+      <h2>Dashboard</h2>
+    </header>
+    <main>
+      <section id="series" iterate="series">
+        <header>
+          <h3>Series</h3>
+          <nav>
+            <a @href="monitor/series/new">New</a>
+          </nav>
+        </header>
+        <div class="series widget" lquery="(data :series id) (data :interval interval)">
+          <h4><a lquery="(text title) (attr :href (monitor::series-url *))">Title</a></h4>
+          <span class="placeholder">Loading data...</span>
+        </div>
+      </section>
+      <section id="alerts">
+        <header>
+          <h3>Alerts</h3>
+          <nav>
+            <a @href="monitor/alert/new">New</a>
+          </nav>
+        </header>
+        <ul iterate="alerts">
+          <li class="alert">
+            <a class="title" lquery="(text title) (attr :href (monitor::alert-url alert))">Title</a>
+            <a class="series" lquery="(text (clip (monitor::ensure-series *) :title)) (attr :href (monitor::series-url series))">Series</a>
+            <span class="subscriptions" lquery="(text (length (monitor::list-subscirptions *)))"></span>
+          </li>
+        </ul>
+      </section>
+    </main>
+    <footer>
+      &copy; <c:s>copyright</c:s> - Running on Monitor <c:s>software-version</c:s>
+    </footer>
+  </body>
+</html>
