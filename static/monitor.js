@@ -31,7 +31,7 @@ class Series{
         if(id === undefined) id = element.dataset.series;
         if(interval === undefined) interval = element.dataset.interval;
         if(unit === undefined) unit = element.dataset.unit;
-        if(color === undefined) color = hashColor(element.querySelector("header i").getAttribute("class"));
+        if(color === undefined) color = element.querySelector("header i") ? hashColor(element.querySelector("header i").getAttribute("class")) : "255,255,255";
 
         this.apiRoot = document.querySelector("head link[rel=api-root]").getAttribute("href");
         if(!this.apiRoot){
@@ -137,7 +137,7 @@ class Series{
         new ResizeObserver(()=>{
             let size = {
                 width: this.element.clientWidth,
-                height: this.element.querySelector(".uplot").clientHeight
+                height: Math.min(this.element.clientWidth / 2, 500)
             };
             log("Resizing to", size);
 			this.uplot.setSize(size);
