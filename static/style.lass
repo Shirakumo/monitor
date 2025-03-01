@@ -45,7 +45,11 @@
  :border-radius 0.5em
  :background (hex 181818)
  :min-height 5em
+ :display flex
+ :flex-wrap wrap
+ :justify-content space-around
  (header 
+  :width 100%
   :font-size 1.0em
   :justify-content space-between
   (input[type=text]
@@ -77,4 +81,5 @@
   :padding 1em
   :text-align center)
  ((:parent .wide)
-  :width 100%))
+  :width 100%)
+ (.u-legend :display none))

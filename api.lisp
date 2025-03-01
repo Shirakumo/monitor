@@ -21,6 +21,7 @@
   (let ((series (add-series type :title (or* title (string-downcase type))
                                  :interval (parse-float:parse-float (or* interval "1.0"))
                                  :arguments (loop for argument in argument[]
+                                                  when (string/= "" argument)
                                                   collect (read-from-string argument)))))
     (api-output* series
                  "Series created."

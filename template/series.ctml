@@ -8,6 +8,8 @@
     <link rel="stylesheet" @href="monitor/static/monitor/style.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="api-root" @href="monitor/api/monitor/"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.iife.min.js"></script>
     <script @src="monitor/static/monitor/monitor.js"></script>
   </head>
   <body>
@@ -19,9 +21,10 @@
     <main>
       <c:using value="series">
         <form id="series">
-          <input type="hidden" name="browser" lquery="true"/>
+          <input type="hidden" name="browser" value="true"/>
           <header>
-            <h3><i class="fa-solid fa-chart-line"></i> <input type="text" name="title" lquery="(val title)" placeholder="Title" required /></h3>
+            <h3><i class="fa-solid fa-chart-line"></i>
+              <input type="text" name="title" lquery="(val title)" placeholder="Title" required /></h3>
             <nav>
               <c:if test="(dm:hull-p *)">
                 <c:then>
@@ -42,13 +45,13 @@
             </nav>
           </header>
           <c:unless test="(dm:hull-p *)">
-            <div class="series widget wide" lquery="(data :series _id) (data :interval interval)">
+            <div class="series widget wide" lquery="(data :series _id) (data :interval interval :unit (monitor::id->unit type))">
               <div class="placeholder">Loading data...</div>
             </div>
           </c:unless>
           <div class="settings">
             <label for="type">Type</label>
-            <select name="type" id="type" lquery="(select type)" iterate="(monitor::list-types)">
+            <select name="type" id="type" lquery="(select (monitor::id->measurement type))" iterate="(monitor::list-types)">
               <option lquery="(val (first *))">
                 <i class="fa-solid" lquery="(add-class (third *))"/>
                 <c:s>(second *)</c:s>
@@ -57,7 +60,7 @@
             <label for="interval">Interval (s)</label>
             <input type="number" name="interval" lquery="(val (or interval 1))" id="interval" min="1" step="1" required>
             <label for="arguments">Arguments</label>
-            <span iterate="(or arguments '(NIL))" id="arguments">
+            <span iterate='(read-from-string (or arguments "(NIL)"))' id="arguments">
               <input type="text" name="argument[]" lquery="(val *)">
             </span>
           </div>
