@@ -27,6 +27,16 @@
                  "Series created."
                  "monitor/series/~a" (dm:field series "title"))))
 
+(define-api monitor/series/edit (id &optional title interval argument[]) (:access (perm monitor))
+  (let ((series (edit-series id :title (or* title)
+                                :interval (if (or* interval) (parse-float:parse-float interval))
+                                :arguments (loop for argument in argument[]
+                                                 when (string/= "" argument)
+                                                 collect (read-from-string argument)))))
+    (api-output* series
+                 "Series updated."
+                 "monitor/series/~a" (dm:field series "title"))))
+
 (define-api monitor/series/remove (id) (:access (perm monitor))
   (remove-series id)
   (api-output* NIL

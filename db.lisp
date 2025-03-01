@@ -126,6 +126,15 @@
       (dm:insert series)
       (values series (load-measurement series)))))
 
+(defun edit-series (series &key title interval arguments)
+  (db:with-transaction ()
+    (let ((series (ensure-series series)))
+      (when title (setf (dm:field series "title") title))
+      (when interval (setf (dm:field series "interval") (float interval 1f0)))
+      (when arguments (setf (dm:field series "arguments") (prin1-to-string arguments)))
+      (dm:save series)
+      series)))
+
 (defun remove-series (series)
   (let ((id (ensure-id series)))
     (db:with-transaction ()
