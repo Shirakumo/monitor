@@ -86,6 +86,9 @@
 (defun id->unit (id)
   (fourth (elt *series-type-map* id)))
 
+(defun id->icon (id)
+  (third (elt *series-type-map* id)))
+
 (defun list-types ()
   (coerce *series-type-map* 'list))
 
@@ -132,8 +135,9 @@
     (remhash id *measurements*)))
 
 (defun perform-measurement (series)
-  (let* ((ensure-series series)
-         (measurement (gethash (dm:id series) *measurements*))
+  (let* ((series (ensure-series series))
+         (measurement (or (gethash (dm:id series) *measurements*)
+                          (load-measurement series)))
          (value (measurements:measure measurement)))
     (db:insert 'datapoints `(("series" . ,(dm:id series))
                              ("time" . ,(precise-time:get-precise-time/double))

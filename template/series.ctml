@@ -14,8 +14,8 @@
   </head>
   <body>
     <header>
-      <i class="fa-solid fa-chart-line"></i>
       <h1><a @href="monitor/"><c:s>title</c:s></a></h1>
+      <i class="fa-solid fa-chart-line"></i>
       <h2><c:s>(or (clip series :title) "New")</c:s></h2>
     </header>
     <main>
@@ -58,7 +58,7 @@
               </option>
             </select>
             <label for="interval">Interval (s)</label>
-            <input type="number" name="interval" lquery="(val (or interval 1))" id="interval" min="1" step="1" required>
+            <input type="number" name="interval" lquery="(val (float (or interval 1) 0f0))" id="interval" min="1" step="1" required>
             <label for="arguments">Arguments</label>
             <span iterate='(read-from-string (or arguments "(NIL)"))' id="arguments">
               <input type="text" name="argument[]" lquery="(val *)">

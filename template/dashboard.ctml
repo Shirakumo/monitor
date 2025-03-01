@@ -14,8 +14,8 @@
   </head>
   <body>
     <header>
-      <i class="fa-solid fa-gauge"></i>
       <h1><a @href="monitor/"><c:s>title</c:s></a></h1>
+      <i class="fa-solid fa-gauge"></i>
       <h2>Dashboard</h2>
     </header>
     <main>
@@ -29,7 +29,10 @@
         <c:splice iterate="series">
           <div class="series widget" lquery="(data :series _id) (data :interval interval :unit (monitor::id->unit type))">
             <header>
-              <h4><a lquery="(text title) (attr :href (monitor::series-url *))">Title</a></h4>
+              <h4>
+                <i class="fa-solid" lquery="(add-class (monitor::id->icon type))"></i>
+                <a lquery="(text title) (attr :href (monitor::series-url *))">Title</a>
+              </h4>
             </header>
             <div class="placeholder">Loading data...</div>
           </div>

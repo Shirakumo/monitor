@@ -21,8 +21,9 @@
   (bt:interrupt-thread *task-runner* (lambda () (invoke-restart 'kill))))
 
 (defun run-tasks ()
-  (loop (perform-measurements)
-        (check-alerts)
+  (loop (with-simple-restart (abort "Abort the task")
+          (perform-measurements)
+          (check-alerts))
         (sleep 0.5)))
 
 (define-trigger (radiance:startup-done start-task-runner) ()

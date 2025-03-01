@@ -11,14 +11,27 @@ let universalOffset = 2208988800;
 let universalTime = ()=>{
     return (Date.now() / 1000)+universalOffset;
 };
+let hashColor = (str)=>{
+    let hash = str.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
+    let colors = ["0,63,92","47,75,124","102,81,145","160,81,149","212,80,135","249,93,106","255,124,67","255,166,0"];
+    return colors[Math.abs(hash % colors.length)];
+};
+
+
 
 class Series{
-    constructor(element, id, interval, unit){
+    constructor(element, options){
         log("Init", element);
 
+        options = options | {};
+        let id = options["series"];
+        let interval = options["interval"];
+        let unit = options["unit"];
+        let color = options["color"];
         if(id === undefined) id = element.dataset.series;
         if(interval === undefined) interval = element.dataset.interval;
         if(unit === undefined) unit = element.dataset.unit;
+        if(color === undefined) color = hashColor(element.querySelector("header i").getAttribute("class"));
 
         this.apiRoot = document.querySelector("head link[rel=api-root]").getAttribute("href");
         if(!this.apiRoot){
@@ -31,6 +44,7 @@ class Series{
         this.element = element;
         this.interval = interval;
         this.unit = unit;
+        this.color = color;
         this.last_check = universalTime() - (60*60*24);
         this.update().then(()=>{
             setInterval(()=>this.update(), Math.max(1000,Math.round(this.interval*1000)));
@@ -101,16 +115,16 @@ class Series{
             series: [
                 {},
                 {
-                    stroke: "red",
+                    stroke: "rgb("+this.color+")",
                     width: 1,
-                    fill: "rgba(255, 0, 0, 0.3)",
+                    fill: "rgba("+this.color+",0.2)",
                     values: formatter
                 }
             ],
             scales: {},
             axes: [
-                {},
-                {scale: this.unit}
+                {stroke: "white"},
+                {scale: this.unit, stroke: "white"}
             ]
         };
         if(this.unit === "%")
@@ -119,6 +133,15 @@ class Series{
             opts.scales[this.unit] = {auto: true};
         this.data = [[],[]];
         this.uplot = new uPlot(opts, this.data, this.element);
+        
+        new ResizeObserver(()=>{
+            let size = {
+                width: this.element.clientWidth,
+                height: this.element.querySelector(".uplot").clientHeight
+            };
+            log("Resizing to", size);
+			this.uplot.setSize(size);
+		}).observe(this.element);
     }
 
     update(){
@@ -134,11 +157,16 @@ class Series{
         if(data == null || data.data[0].length == 0)
             return;
         
-        log(data.data[0].length,"new values.");
-        if(this.data[0].length <= 0 || data.data[0][0] < this.data[0][this.data[0].length-1]){
-            log("Got time before our last value, replacing.");
-            this.data = [[],[]];
+        if(this.data[0].length <= 0){
+            let last = this.data[0][this.data[0].length-1];
+            let i = 0;
+            while( i < data.data[0].length && data.data[0][i] < last){
+                i++;
+            }
+            data.data[0] = data.data[0].slice(i);
+            data.data[1] = data.data[1].slice(i);
         }
+        log(data.data[0].length,"new values.");
         this.data[0] = this.data[0].concat(data.data[0]);
         this.data[1] = this.data[1].concat(data.data[1]);
         this.uplot.setData(this.data);

@@ -16,9 +16,9 @@
   :margin 0
   :display inline-block
   :font-size 1.0em
-  (i :margin-right 0.5em))
- (h2 :border-left 1px solid (hex A0A0A0)
-     :padding-left 0.5em)
+  (i :margin 0.5em 0))
+ (h1 :border-right 1px solid (hex A0A0A0)
+     :padding-right 0.5em)
  (nav (button :margin 0
               :background none
               :border none
@@ -71,7 +71,7 @@
 
 (.series.widget
  :margin 1em
- :width 400px
+ :max-width 400px
  :min-height 200px
  :background (hex 252525)
  :overflow hidden
@@ -81,5 +81,6 @@
   :padding 1em
   :text-align center)
  ((:parent .wide)
+  :max-width none
   :width 100%)
  (.u-legend :display none))
