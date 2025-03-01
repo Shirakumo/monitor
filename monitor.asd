@@ -6,6 +6,7 @@
   :components ((:file "module")
                (:file "db")
                (:file "alert")
+               (:file "task-runner")
                (:file "front")
                (:file "api"))
   :depends-on ((:interface :database)
