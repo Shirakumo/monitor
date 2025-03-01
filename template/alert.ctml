@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8"/>
-    <title><c:s>title</c:s> <c:s>(clip series :title)</c:s></title>
+    <title><c:s>title</c:s> <c:s>(clip alert :title)</c:s></title>
     <meta name="robots" content="noindex, nofollow"/>
     <meta name="viewport" content="width=device-width"/>
     <link rel="stylesheet" @href="monitor/static/monitor/style.css"/>
@@ -15,28 +15,28 @@
   <body>
     <header>
       <h1><a @href="monitor/"><c:s>title</c:s></a></h1>
-      <i class="fa-solid fa-chart-line"></i>
-      <h2><c:s>(or (clip series :title) "New")</c:s></h2>
+      <i class="fa-solid fa-bell"></i>
+      <h2><c:s>(or (clip alert :title) "New")</c:s></h2>
     </header>
     <main>
-      <c:using value="series">
-        <form id="series">
+      <c:using value="alert">
+        <form id="alert">
           <input type="hidden" name="browser" value="true"/>
           <header>
             <h3><i class="fa-solid fa-chart-line"></i>
-              <input type="text" name="title" lquery="(val title)" placeholder="Title" /></h3>
+              <input type="text" name="title" lquery="(val title)" placeholder="Title" required /></h3>
             <nav>
               <c:if test="(dm:hull-p *)">
                 <c:then>
-                  <button @formaction="monitor/api/monitor/series/new">
+                  <button @formaction="monitor/api/monitor/alert/new">
                     <i class="fa-solid fa-circle-plus"></i> Create
                   </button>
                 </c:then>
                 <c:else>
-                  <button @formaction="monitor/api/monitor/series/edit">
+                  <button @formaction="monitor/api/monitor/alert/edit">
                     <i class="fa-solid fa-pen-to-square"></i> Edit
                   </button>
-                  <button @formaction="monitor/api/monitor/series/remove">
+                  <button @formaction="monitor/api/monitor/alert/remove">
                     <i class="fa-solid fa-trash-can"></i> Delete
                   </button>
                   <input type="hidden" name="id" lquery="(val _id)"/>
@@ -44,25 +44,16 @@
               </c:if>
             </nav>
           </header>
-          <c:unless test="(dm:hull-p *)">
-            <div class="series widget wide" lquery="(data :series _id) (data :interval interval :unit (monitor::id->unit type))">
-              <div class="placeholder">Loading data...</div>
-            </div>
-          </c:unless>
           <div class="settings">
-            <label for="type">Type</label>
-            <select name="type" id="type" lquery="(select (if type (monitor::id->measurement type)))" iterate="(monitor::list-types)">
-              <option lquery="(val (first *))">
-                <i class="fa-solid" lquery="(add-class (third *))"/>
-                <c:s>(second *)</c:s>
-              </option>
+            <label for="type">Series</label>
+            <select name="series" id="series" lquery="(select series)" iterate="(monitor::list-series)">
+              <option lquery="(val _id) (text title)"></option>
             </select>
-            <label for="interval">Interval (s)</label>
-            <input type="number" name="interval" lquery="(val (float (or interval 1) 0f0))" id="interval" min="1" step="1" required>
-            <label for="arguments">Arguments</label>
-            <span iterate='(read-from-string (or arguments "(NIL)"))' id="arguments">
-              <input type="text" name="argument[]" lquery="(val *)">
-            </span>
+            <label for="duration">Duration (s)</label>
+            <input type="number" name="duration" id="duration" lquery="(val (float (or duration 60) 0f0))" min="1" step="1" required>
+            <label for="duration">Threshold</label>
+            <input type="number" name="threshold" id="threshold" lquery="(val (float (abs (or threshold 50)) 0f0))" min="0" step="0.1" required>
+            <input type="checkbox" name="above" id="above" lquery="(val (< 0.0 threshold))">
           </div>
         </form>
       </c:using>

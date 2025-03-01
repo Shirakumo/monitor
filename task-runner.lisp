@@ -21,6 +21,7 @@
   (bt:interrupt-thread *task-runner* (lambda () (invoke-restart 'kill))))
 
 (defun run-tasks ()
+  ;; FIXME: only measure whatever is due based on interval!
   (loop (with-simple-restart (abort "Abort the task")
           (perform-measurements)
           (check-alerts))

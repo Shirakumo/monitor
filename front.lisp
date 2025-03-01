@@ -32,7 +32,7 @@
 
 (define-page alert "monitor/^alert/(.*)$" (:uri-groups (alert) :access (perm monitor) :clip "alert.ctml")
   (let ((alert (if (string-equal "new" alert)
-                   (dm:hull 'alert)
+                   (dm:hull 'alerts)
                    (ensure-alert alert))))
     (r-clip:process T :alert alert
                       :subscriptions (unless (dm:hull-p alert)

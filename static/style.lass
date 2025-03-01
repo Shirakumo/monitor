@@ -71,7 +71,8 @@
 
 (.series.widget
  :margin 1em
- :max-width 400px
+ :min-width 400px
+ :width (calc (- 50% 2em))
  :min-height 200px
  :background (hex 252525)
  :overflow hidden
