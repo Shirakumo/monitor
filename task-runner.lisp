@@ -21,11 +21,26 @@
   (bt:interrupt-thread *task-runner* (lambda () (invoke-restart 'kill))))
 
 (defun run-tasks ()
-  ;; FIXME: only measure whatever is due based on interval!
-  (loop (with-simple-restart (abort "Abort the task")
-          (perform-measurements)
-          (check-alerts))
-        (sleep 0.5)))
+  (let* ((series (list-series))
+         (now (precise-time:get-precise-time/double))
+         (interval (loop for s in series minimize (dm:field s "interval"))))
+    (dolist (series series)
+      (setf (dm:field series 'last-check) now))
+    (loop (dolist (series series)
+            (when (< (dm:field series "interval")
+                     (- now (dm:field series 'last-check)))
+              (with-simple-restart (abort "Abort the task")
+                (perform-measurement series)
+                (setf (dm:field series 'last-check) now))))
+          (check-alerts)
+          (sleep interval)
+          ;; Refresh data
+          (let ((new-series (list-series)))
+            (dolist (series new-series (setf series new-series))
+              (let ((prior (find (dm:id series) series :key #'dm:id)))
+                (setf (dm:field series 'last-check) (if prior (dm:field prior 'last-check) now)))))
+          (setf interval (loop for s in series minimize (dm:field s "interval")))
+          (setf now (precise-time:get-precise-time/double)))))
 
 (define-trigger (radiance:startup-done start-task-runner) ()
   (unless (and *task-runner*
