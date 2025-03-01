@@ -1,38 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8"/>
     <title><c:s>title</c:s> Dashboard</title>
-    <meta name="robots" content="noindex, nofollow" />
+    <meta name="robots" content="noindex, nofollow"/>
     <meta name="viewport" content="width=device-width"/>
-    <link rel="stylesheet" @href="monitor/static/monitor/style.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" integrity="sha384-gfdkjb5BdAXd+lj+gudLWI+BXq4IuLW5IT+brZEZsLFm++aCMlF1V92rMkPaX4PP" crossorigin="anonymous"/>
+    <link rel="stylesheet" @href="monitor/static/monitor/style.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="api-root" @href="monitor/api/monitor/"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/uplot@1.6.31/dist/uPlot.iife.min.js"></script>
     <script @src="monitor/static/monitor/monitor.js"></script>
   </head>
   <body>
     <header>
-      <h1><c:s>title</c:s></h1>
+      <i class="fa-solid fa-gauge"></i>
+      <h1><a @href="monitor/"><c:s>title</c:s></a></h1>
       <h2>Dashboard</h2>
     </header>
     <main>
-      <section id="series" iterate="series">
+      <section id="series">
         <header>
-          <h3>Series</h3>
+          <h3><i class="fa-solid fa-chart-line"></i> Series</h3>
           <nav>
-            <a @href="monitor/series/new">New</a>
+            <a @href="monitor/series/new"><i class="fa-solid fa-circle-plus"></i> New</a>
           </nav>
         </header>
-        <div class="series widget" lquery="(data :series id) (data :interval interval)">
-          <h4><a lquery="(text title) (attr :href (monitor::series-url *))">Title</a></h4>
-          <span class="placeholder">Loading data...</span>
-        </div>
+        <c:splice iterate="series">
+          <div class="series widget" lquery="(data :series _id) (data :interval interval :unit (monitor::id->unit type))">
+            <header>
+              <h4><a lquery="(text title) (attr :href (monitor::series-url *))">Title</a></h4>
+            </header>
+            <div class="placeholder">Loading data...</div>
+          </div>
+        </c:splice>
       </section>
       <section id="alerts">
         <header>
-          <h3>Alerts</h3>
+          <h3><i class="fa-solid fa-bell"></i> Alerts</h3>
           <nav>
-            <a @href="monitor/alert/new">New</a>
+            <a @href="monitor/alert/new"><i class="fa-solid fa-circle-plus"></i> New</a>
           </nav>
         </header>
         <ul iterate="alerts">

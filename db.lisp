@@ -3,56 +3,57 @@
 (defvar *measurements* (make-hash-table :test 'eql))
 (defparameter *series-type-map*
   (map 'vector (lambda (x)
-                 (or (find-symbol (string x) '#:org.shirakumo.machine-state.measurements)
-                     (error "No measurement named ~a" x)))
-       #(storage-io
-         storage-read
-         storage-write
-         storage-%
-         storage-free
-         storage-used
-         storage-total
-         network-io
-         network-read
-         network-write
-         memory-%
-         memory-free
-         memory-used
-         memory-total
-         uptime
-         cpu-%
-         cpu-idle
-         cpu-busy
-         heap-%
-         heap-free
-         heap-used
-         heap-total
-         process-busy
-         process-size
-         process-io
-         process-read
-         process-write
-         gc-busy
-         gpu-%
-         gpu-free
-         gpu-used
-         gpu-busy
-         battery-%
-         battery-charge)))
+                 (list* (or (find-symbol (string (first x)) '#:org.shirakumo.machine-state.measurements)
+                            (error "No measurement named ~a" x))
+                        (rest x)))
+       '((storage-io "Storage IO" "fa-hard-drive" "kB")
+         (storage-read "Storage Read" "fa-hard-drive" "kB")
+         (storage-write "Storage Write" "fa-hard-drive" "kB")
+         (storage-% "Storage Use" "fa-hard-drive" "%")
+         (storage-free "Storage Free" "fa-hard-drive" "kB")
+         (storage-used "Storage Used" "fa-hard-drive" "kB")
+         (storage-total "Storage Total" "fa-hard-drive" "kB")
+         (network-io "Network IO" "fa-network-wired" "kB")
+         (network-read "Network Read" "fa-network-wired" "kB")
+         (network-write "Network Write" "fa-network-wired" "kB")
+         (memory-% "Memory Use" "fa-memory" "%")
+         (memory-free "Memory Free" "fa-memory" "kB")
+         (memory-used "Memory Used" "fa-memory" "kB")
+         (memory-total "Memory Total" "fa-memory" "kB")
+         (uptime "Uptime" "fa-heart" "s")
+         (cpu-% "CPU Use" "fa-microchip" "%")
+         (cpu-idle "CPU Idle" "fa-microchip" "s")
+         (cpu-busy "CPU Busy" "fa-microchip" "s")
+         (heap-% "Heap Use" "fa-user" "%")
+         (heap-free "Heap Free" "fa-user" "kB")
+         (heap-used "Heap Used" "fa-user" "kB")
+         (heap-total "Heap Total" "fa-user" "kB")
+         (process-busy "Process Busy" "fa-user" "s")
+         (process-size "Process Size" "fa-user" "s")
+         (process-io "Process IO" "fa-user" "kB")
+         (process-read "Process Read" "fa-user" "kB")
+         (process-write "Process Write" "fa-user" "kB")
+         (gc-busy "GC Busy" "fa-user" "s")
+         (gpu-% "GPU Use" "fa-cube" "%")
+         (gpu-free "GPU Free" "fa-cube" "kB")
+         (gpu-used "GPU Used" "fa-cube" "kB")
+         (gpu-busy "GPU Busy" "fa-cube" "s")
+         (battery-% "Battery" "fa-battery-half" "%")
+         (battery-charge "Battery Charge" "fa-battery-half" "W"))))
 
 (define-trigger db:connected ()
-  (db:create 'datapoints
-             '((series (:id series))
-               (time (:integer 5))
-               (value :float))
-             :indices '(series time))
-
   (db:create 'series
              '((title (:varchar 64))
                (interval :float)
                (type (:integer 2))
                (arguments (:varchar 256)))
              :indices '(title))
+
+  (db:create 'datapoints
+             '((series (:id series))
+               (time :float)
+               (value :float))
+             :indices '(series time))
 
   (db:create 'alerts
              '((title (:varchar 64))
@@ -70,19 +71,33 @@
              :indices '(alert email)))
 
 (defun measurement->id (type)
-  (or (position type *series-type-map* :test #'string-equal)
+  (or (position type *series-type-map* :key #'first :test #'string-equal)
       (error "No such measurement type ~s" type)))
 
 (defun id->measurement (id)
-  (elt id *series-type-map*))
+  (first (elt *series-type-map* id)))
 
 (defun load-measurement (series)
   (setf (gethash (dm:id series) *measurements*)
         (apply (id->measurement (dm:field series "type"))
-               (read-from-string (dm:field series "arguments")))))
+               (when (string/= "" (dm:field series "arguments"))
+                 (read-from-string (dm:field series "arguments"))))))
+
+(defun id->unit (id)
+  (fourth (elt *series-type-map* id)))
+
+(defun list-types ()
+  (coerce *series-type-map* 'list))
+
+(defun ensure-id (thing)
+  (typecase thing
+    (db:id thing)
+    (dm:data-model (dm:id thing))
+    (T (db:ensure-id thing))))
 
 (defun list-series ()
-  (dm:get 'series (db:query :all) :order '(("title" . :DESC))))
+  (dm:get 'series (db:query :all)
+          :sort '(("title" :DESC))))
 
 (defun ensure-series (series-ish &optional (errorp T))
   (or (typecase series-ish
@@ -94,17 +109,19 @@
            (alerts (ensure-series (dm:field series-ish "series")))
            (datapoints (ensure-series (dm:field series-ish "series")))))
         (string
-         (dm:get-one 'series (db:query (:= 'title series-ish)))))
+         (or (dm:get-one 'series (db:query (:= 'title series-ish)))
+             (ensure-series (db:ensure-id series-ish) errorp))))
       (when errorp (error "No such series ~a" series-ish))))
 
 (defun add-series (type &key (title (string-downcase type)) (interval 1.0) arguments)
-  (let ((series (dm:hull 'series)))
-    (setf (dm:field series "title") title)
-    (setf (dm:field series "interval") (float interval 1f0))
-    (setf (dm:field series "type") (measurement->id type))
-    (setf (dm:field series "arguments") (prin1-to-string arguments))
-    (dm:insert series)
-    (values series (load-measurement series))))
+  (db:with-transaction ()
+    (let ((series (dm:hull 'series)))
+      (setf (dm:field series "title") title)
+      (setf (dm:field series "interval") (float interval 1f0))
+      (setf (dm:field series "type") (measurement->id type))
+      (setf (dm:field series "arguments") (prin1-to-string arguments))
+      (dm:insert series)
+      (values series (load-measurement series)))))
 
 (defun remove-series (series)
   (let ((id (ensure-id series)))
@@ -119,8 +136,8 @@
          (measurement (gethash (dm:id series) *measurements*))
          (value (measurements:measure measurement)))
     (db:insert 'datapoints `(("series" . ,(dm:id series))
-                             ("time" . ,(float (precise-time:get-precise-time/double) 0f0))
-                             ("value" . ,(float value 0f0))))))
+                             ("time" . ,(precise-time:get-precise-time/double))
+                             ("value" . ,(float value 0d0))))))
 
 (defun load-measurements ()
   (mapcar #'load-measurement (list-series)))
@@ -130,27 +147,27 @@
 
 (defun list-measurements (series &key since count before)
   (let* ((series (ensure-series series))
-         (before (or before (precise-time:get-precise-time/double)))
-         (since (or since (- before (* count (dm:field series "interval"))))))
+         (before (or before (+ (precise-time:get-precise-time/double) 10.0)))
+         (since (or since (- before (* (or count (* 60 60 24)) (dm:field series "interval"))))))
     (db:select 'datapoints (db:query (:and (:= 'series (dm:id series))
                                            (:<= (float since 0d0) 'time)
                                            (:<= 'time (float before 0d0))))
-               :sort '(("time" . :ASC))
+               :sort '(("time" :ASC))
                :amount count)))
 
 (defun list-alerts ()
-  (dm:get 'alert (db:query :all) :order '(("title" . :DESC))))
+  (dm:get 'alerts (db:query :all) :sort '(("title" :DESC))))
 
 (defun ensure-alert (alert-ish &optional (errorp T))
   (or (typecase alert-ish
         (db:id
-         (dm:get-one 'alert (db:query (:= '_id alert-ish))))
+         (dm:get-one 'alerts (db:query (:= '_id alert-ish))))
         (dm:data-model
          (ecase (dm:collection alert-ish)
            (alert alert-ish)
            (alert/subscribers (ensure-alert (dm:field alert-ish "alert")))))
         (string
-         (dm:get-one 'alert (db:query (:= 'title alert-ish)))))
+         (dm:get-one 'alerts (db:query (:= 'title alert-ish)))))
       (when errorp (error "No such alert ~a" alert-ish))))
 
 (defun add-alert (series threshold &key title (duration 0.0) emails)
@@ -166,11 +183,12 @@
 (defun remove-alert (alert)
   (let ((id (ensure-id alert)))
     (db:with-transaction ()
-      (db:remove 'alert/subscribers (db:query (:= 'alert id)))
+      (db:remove 'alert/subscribers (db:query (:= 'alerts id)))
       (db:remove 'alerts (db:query (:= '_id id))))))
 
 (defun list-subscriptions (alert)
-  (dm:get 'alert/subscribers (db:query (:= 'alert (dm:id (ensure-alert alert))))))
+  (dm:get 'alert/subscribers (db:query (:= 'alerts (dm:id (ensure-alert alert))))
+          :sort '(("name" :DESC))))
 
 (defun add-subscription (alert email &optional (name email))
   (db:insert 'alert/subscribers `(("alert" . ,(ensure-id alert))

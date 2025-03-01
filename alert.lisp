@@ -85,7 +85,7 @@
                       (lambda (x) (<= (dm:field x "value") hi-threshold)))))
          (points (db:select 'datapoints (db:query (:and (:= 'series (dm:field alert "series"))
                                                         (:<= min 'time)))
-                            :sort '(("time" . :ASC))))
+                            :sort '(("time" :ASC))))
          (streak (longest-streak points check)))
     (when (and streak
                (<= (dm:field alert "duration")

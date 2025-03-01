@@ -20,10 +20,11 @@
 (define-api monitor/series/new (type &optional title interval argument[]) (:access (perm monitor))
   (let ((series (add-series type :title (or* title (string-downcase type))
                                  :interval (parse-float:parse-float (or* interval "1.0"))
-                                 :arguments argument[])))
+                                 :arguments (loop for argument in argument[]
+                                                  collect (read-from-string argument)))))
     (api-output* series
                  "Series created."
-                 (series-url series))))
+                 "monitor/series/~a" (dm:field series "title"))))
 
 (define-api monitor/series/remove (id) (:access (perm monitor))
   (remove-series id)
@@ -32,8 +33,20 @@
                "monitor/"))
 
 (define-api monitor/series/data (id &optional since before) (:access (perm monitor))
-  (let ((series (ensure-series id)))
-    (api-output* (list-measurements series :since (time? since) :before (time? before)))))
+  (let* ((series (ensure-series id))
+         (datapoints (list-measurements series :since (time? since) :before (time? before)))
+         (data (make-hash-table :test 'equal))
+         (type-info (elt *series-type-map* (dm:field series "type")))
+         (times (make-array (length datapoints)))
+         (values (make-array (length times))))
+    (loop for i from 0
+          for point in datapoints
+          do (setf (aref times i) (gethash "time" point))
+             (setf (aref values i) (gethash "value" point)))
+    (setf (gethash "title" data) (second type-info))
+    (setf (gethash "unit" data) (fourth type-info))
+    (setf (gethash "data" data) (vector times values))
+    (api-output* data)))
 
 (define-api monitor/alert (id) (:access (perm monitor))
   (api-output* (ensure-alert id)))
@@ -59,11 +72,11 @@
     (add-subscription alert email (or* name email))
     (api-output* NIL
                  "Subscription created."
-                 (alert-url alert))))
+                 "monitor/alert/~a" (dm:id alert))))
 
 (define-api monitor/alert/unsubscribe (id email) (:access (perm monitor))
   (let ((alert (ensure-alert id)))
-    (remove-subscription alert email (or* name email))
+    (remove-subscription alert email)
     (api-output* NIL
                  "Subscription deleted."
-                 (alert-url alert))))
+                 "monitor/alert/~a" (dm:id alert))))

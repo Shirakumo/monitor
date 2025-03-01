@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8"/>
+    <title><c:s>title</c:s> <c:s>(clip series :title)</c:s></title>
+    <meta name="robots" content="noindex, nofollow"/>
+    <meta name="viewport" content="width=device-width"/>
+    <link rel="stylesheet" @href="monitor/static/monitor/style.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="api-root" @href="monitor/api/monitor/"/>
+    <script @src="monitor/static/monitor/monitor.js"></script>
+  </head>
+  <body>
+    <header>
+      <i class="fa-solid fa-chart-line"></i>
+      <h1><a @href="monitor/"><c:s>title</c:s></a></h1>
+      <h2><c:s>(or (clip series :title) "New")</c:s></h2>
+    </header>
+    <main>
+      <c:using value="series">
+        <form id="series">
+          <input type="hidden" name="browser" lquery="true"/>
+          <header>
+            <h3><i class="fa-solid fa-chart-line"></i> <input type="text" name="title" lquery="(val title)" placeholder="Title" required /></h3>
+            <nav>
+              <c:if test="(dm:hull-p *)">
+                <c:then>
+                  <button @formaction="monitor/api/monitor/series/new">
+                    <i class="fa-solid fa-circle-plus"></i> Create
+                  </button>
+                </c:then>
+                <c:else>
+                  <button @formaction="monitor/api/monitor/series/edit">
+                    <i class="fa-solid fa-pen-to-square"></i> Edit
+                  </button>
+                  <button @formaction="monitor/api/monitor/series/remove">
+                    <i class="fa-solid fa-trash-can"></i> Delete
+                  </button>
+                  <input type="hidden" name="id" lquery="(val _id)"/>
+                </c:else>
+              </c:if>
+            </nav>
+          </header>
+          <c:unless test="(dm:hull-p *)">
+            <div class="series widget wide" lquery="(data :series _id) (data :interval interval)">
+              <div class="placeholder">Loading data...</div>
+            </div>
+          </c:unless>
+          <div class="settings">
+            <label for="type">Type</label>
+            <select name="type" id="type" lquery="(select type)" iterate="(monitor::list-types)">
+              <option lquery="(val (first *))">
+                <i class="fa-solid" lquery="(add-class (third *))"/>
+                <c:s>(second *)</c:s>
+              </option>
+            </select>
+            <label for="interval">Interval (s)</label>
+            <input type="number" name="interval" lquery="(val (or interval 1))" id="interval" min="1" step="1" required>
+            <label for="arguments">Arguments</label>
+            <span iterate="(or arguments '(NIL))" id="arguments">
+              <input type="text" name="argument[]" lquery="(val *)">
+            </span>
+          </div>
+        </form>
+      </c:using>
+    </main>
+    <footer>
+      &copy; <c:s>copyright</c:s> - Running on Monitor <c:s>software-version</c:s>
+    </footer>
+  </body>
+</html>
