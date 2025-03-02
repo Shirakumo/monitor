@@ -72,6 +72,14 @@
               "Alert created."
                "monitor/alerts"))
 
+(define-api monitor/alert/edit (alert &optional threshold title duration) (:access (perm monitor))
+  (api-output* (edit-alert alert
+                           :title (or* title)
+                           :threshold (when (or* threshold) (parse-float:parse-float threshold))
+                           :duration (when (or* duration) (parse-float:parse-float duration)))
+               "Alert updated."
+               "monitor/alert/~d" (dm:id alert)))
+
 (define-api monitor/alert/remove (id) (:access (perm monitor))
   (remove-alert id)
   (api-output* NIL

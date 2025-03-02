@@ -201,6 +201,17 @@
     (dolist (email emails alert)
       (add-subscription alert email))))
 
+(defun edit-alert (alert &key threshold title duration emails)
+  (db:with-transaction ()
+    (let ((alert (ensure-alert alert)))
+      (when threshold (setf (dm:field alert "threshold") (float threshold 0f0)))
+      (when duration (setf (dm:field alert "duration") (float duration 0f0)))
+      (when (or* title) (setf (dm:field alert "title") title))
+      (dm:save alert))))
+
+(defun alert-up-p (alert)
+  (< 0 (dm:field (ensure-alert alert) "trigger-time")))
+
 (defun remove-alert (alert)
   (let ((id (ensure-id alert)))
     (db:with-transaction ()
