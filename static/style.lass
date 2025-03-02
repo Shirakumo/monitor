@@ -86,3 +86,13 @@
   :width 100%)
  (.uplot :margin 0.5em)
  (.u-legend :display none))
+
+(.alerts
+ :width 100%
+ :margin 1em
+ (.alert.up :background (hex A00000))
+ (th :text-align left)
+ ((:or th td) :padding 0.2em)
+ (.status :width 2em)
+ (.series :width 10em)
+ (.subscriptions :width 5em))

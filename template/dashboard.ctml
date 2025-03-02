@@ -45,13 +45,28 @@
             <a @href="monitor/alert/new"><i class="fa-solid fa-circle-plus"></i> New</a>
           </nav>
         </header>
-        <ul iterate="alerts">
-          <li class="alert" lquery="(add-class (when (monitor::alert-up-p *) :up))">
-            <a class="title" lquery="(text title) (attr :href (monitor::alert-url *))">Title</a>
-            <a class="series" lquery="(text (clip (monitor::ensure-series *) :title)) (attr :href (monitor::series-url series))">Series</a>
-            <span class="subscriptions" lquery="(text (length (monitor::list-subscriptions *)))"></span>
-          </li>
-        </ul>
+        <table class="alerts">
+          <thead>
+            <tr>
+              <th class="status"></th>
+              <th class="title">Title</th>
+              <th class="series">Series</th>
+              <th class="subscriptions">Subscriptions</th>
+            </tr>
+          </thead>
+          <tbody iterate="alerts">
+            <tr class="alert" lquery="(add-class (when (monitor::alert-up-p *) :up))">
+              <td class="status">
+                <c:when test="(monitor::alert-up-p *)">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                </c:when>
+              </td>
+              <td class="title"><a lquery="(text title) (attr :href (monitor::alert-url *))">Title</a></td>
+              <td class="series"><a lquery="(text (clip (monitor::ensure-series *) :title)) (attr :href (monitor::series-url series))">Series</a></td>
+              <td class="subscriptions" lquery="(text (length (monitor::list-subscriptions *)))"></td>
+            </tr>
+          </tbody>
+        </table>
       </section>
     </main>
     <footer>
