@@ -84,4 +84,5 @@
  ((:parent .wide)
   :max-width none
   :width 100%)
+ (.uplot :margin 0.5em)
  (.u-legend :display none))

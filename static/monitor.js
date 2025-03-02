@@ -99,8 +99,17 @@ class Series{
     initChart(){
         let formatter = (s, v) => v.toFixed(3);
         if(this.unit === "%") formatter = (s, v) => v.toFixed(1) + "%";
-        if(this.unit === "kB") formatter = (s, v) => v.toFixed(1) + "kB";
         if(this.unit === "s") formatter = (s, v) => v.toFixed(3) + "s";
+        if(this.unit === "B") formatter = (s, v) => {
+            if(v === null) return '';
+            if(v < 1024) return Math.round(v) + "B";
+            v /= 1024;
+            if(v < 1024) return Math.round(v) + "kB";
+            v /= 1024;
+            if(v < 1024) return Math.round(v) + "MB";
+            v /= 1024;
+            return Math.round(v) + "GB";
+        }
         let opts = {
             width: 400,
             height: 200,
@@ -115,24 +124,42 @@ class Series{
             series: [
                 {},
                 {
-                    stroke: "rgb("+this.color+")",
                     width: 1,
+                    stroke: "rgb("+this.color+")",
                     fill: "rgba("+this.color+",0.2)",
+                    scale: this.unit,
                     values: formatter
                 }
             ],
-            scales: {},
             axes: [
                 {stroke: "white"},
-                {scale: this.unit, stroke: "white"}
-            ]
+                {
+                    scale: this.unit,
+                    stroke: "white",
+                    splits: (this.unit === "%")? [0,25,50,75,100] : [1,32,1024,1024*32,1024*1024,1024*1024*32],
+                    filter: (u, v) => v,
+                    values: (u, s) => s.map((v, i) => formatter(u, v)),
+                }
+            ],
+            scales: {
+                "%": {
+                    auto: false,
+                    range: [0,100]
+                },
+                "s": {
+                    auto: true
+                },
+                "B": {
+                    auto: false,
+                    range: [1, 1024*1024*32],
+                    distr: 3,
+                    log: 2
+                }
+            },
         };
-        if(this.unit === "%")
-            opts.scales["%"] = {auto: false, range: [0,100]};
-        else
-            opts.scales[this.unit] = {auto: true};
         this.data = [[],[]];
         this.uplot = new uPlot(opts, this.data, this.element);
+        this.uplot.opts = opts;
         
         new ResizeObserver(()=>{
             let size = {
@@ -165,6 +192,11 @@ class Series{
             }
             data.data[0] = data.data[0].slice(i);
             data.data[1] = data.data[1].slice(i);
+        }
+        if(this.uplot.opts.scales[this.unit].distr === 3){
+            for(let i=0; i<data.data[1].length; ++i){
+                if(data.data[1][i] == 0.0) data.data[1][i] = 1.0;
+            }
         }
         log(data.data[0].length,"new values.");
         this.data[0] = this.data[0].concat(data.data[0]);
