@@ -10,7 +10,7 @@
            (l:info :monitor "Starting task runner.")
            (with-simple-restart (kill "Kill the task runner")
              (unwind-protect
-                  (handler-bind ((error (lambda (e) (maybe-invoke-debugger e 'continue e))))
+                  (handler-bind ((error (lambda (e) (maybe-invoke-debugger e 'continue))))
                     (run-tasks))
                (l:info :monitor "Stopping task runner.")
                (setf *task-runner* NIL)))))
@@ -34,7 +34,9 @@
               (with-simple-restart (continue "Abort the task")
                 (perform-measurement series)
                 (setf (dm:field series 'last-check) now))))
-          (check-alerts)
+          (dolist (alert (list-alerts))
+            (with-simple-restart (continue "Abort the alert")
+              (check-alert alert)))
           (sleep interval)
           ;; Refresh data
           (let ((new-series (list-series)))

@@ -20,7 +20,7 @@
     </header>
     <main>
       <c:using value="alert">
-        <form id="alert">
+        <form id="alert" lquery="(add-class (when (monitor::alert-up-p *) :up))">
           <input type="hidden" name="browser" value="true"/>
           <header>
             <h3><i class="fa-solid fa-bell"></i>

@@ -185,18 +185,21 @@
          (dm:get-one 'alerts (db:query (:= '_id alert-ish))))
         (dm:data-model
          (ecase (dm:collection alert-ish)
-           (alert alert-ish)
+           (alerts alert-ish)
            (alert/subscribers (ensure-alert (dm:field alert-ish "alert")))))
         (string
-         (dm:get-one 'alerts (db:query (:= 'title alert-ish)))))
+         (or (dm:get-one 'alerts (db:query (:= 'title alert-ish)))
+             (ensure-alert (db:ensure-id alert-ish) errorp))))
       (when errorp (error "No such alert ~a" alert-ish))))
 
 (defun add-alert (series threshold &key title (duration 0.0) emails)
-  (let ((alert (dm:hull 'alert)))
+  (let ((alert (dm:hull 'alerts)))
     (setf (dm:field alert "series") (ensure-id series))
     (setf (dm:field alert "title") (or* title (dm:field (ensure-series series) "title")))
     (setf (dm:field alert "threshold") (float threshold 0f0))
     (setf (dm:field alert "duration") (float duration 0f0))
+    (setf (dm:field alert "trigger-time") -1.0)
+    (setf (dm:field alert "last-check") 0.0)
     (dm:insert alert)
     (dolist (email emails alert)
       (add-subscription alert email))))
@@ -210,7 +213,7 @@
       (dm:save alert))))
 
 (defun alert-up-p (alert)
-  (< 0 (dm:field (ensure-alert alert) "trigger-time")))
+  (< 0 (or (dm:field (ensure-alert alert) "trigger-time") 0)))
 
 (defun remove-alert (alert)
   (let ((id (ensure-id alert)))
@@ -219,7 +222,7 @@
       (db:remove 'alerts (db:query (:= '_id id))))))
 
 (defun list-subscriptions (alert)
-  (dm:get 'alert/subscribers (db:query (:= 'alerts (dm:id (ensure-alert alert))))
+  (dm:get 'alert/subscribers (db:query (:= 'alert (dm:id (ensure-alert alert))))
           :sort '(("name" :DESC))))
 
 (defun add-subscription (alert email &optional (name email))

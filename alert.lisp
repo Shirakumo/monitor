@@ -75,22 +75,22 @@
 
 (defun get-alert-streak (alert)
   (let* ((alert (ensure-alert alert))
-         (min (min (dm:field alert "last-check")
+         (min (min (or (dm:field alert "last-check") 0d0)
                    (- (precise-time:get-precise-time/double)
                       (dm:field alert "duration"))))
          (check (if (= 1 (float-sign (dm:field alert "threshold")))
                     (let ((lo-threshold (+ (dm:field alert "threshold"))))
-                      (lambda (x) (<= lo-threshold (dm:field x "value"))))
+                      (lambda (x) (<= lo-threshold (gethash "value" x))))
                     (let ((hi-threshold (- (dm:field alert "threshold"))))
-                      (lambda (x) (<= (dm:field x "value") hi-threshold)))))
+                      (lambda (x) (<= (gethash "value" x) hi-threshold)))))
          (points (db:select 'datapoints (db:query (:and (:= 'series (dm:field alert "series"))
                                                         (:<= min 'time)))
                             :sort '(("time" :ASC))))
          (streak (longest-streak points check)))
     (when (and streak
                (<= (dm:field alert "duration")
-                   (- (dm:field (car (last streak)) "time")
-                      (dm:field (first streak) "time"))))
+                   (- (gethash "time" (car (last streak)))
+                      (gethash "time" (first streak)))))
       streak)))
 
 (defun check-alert (alert &key (send T) (save T))
@@ -98,11 +98,11 @@
          (streak (get-alert-streak alert)))
     (setf (dm:field alert "last-check") (precise-time:get-precise-time/double))
     (when send
-      (cond ((and streak (< (dm:field alert "trigger-time") 0))
+      (cond ((and streak (< (or (dm:field alert "trigger-time") 0) 0))
              ;; We have a streak but our trigger is not set yet, so up it.
              (send-alerts alert streak :direction :trigger-up)
              (setf (dm:field alert "trigger-time") (precise-time:get-precise-time/double)))
-            ((and (not streak) (< 0 (dm:field alert "trigger-time")))
+            ((and (not streak) (< 0 (or (dm:field alert "trigger-time") 0)))
              ;; Streak has ended but our trigger is set, so down it.
              (send-alerts alert streak :direction :trigger-down)
              (setf (dm:field alert "trigger-time") -1d0))))

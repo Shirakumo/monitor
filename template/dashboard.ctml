@@ -46,10 +46,10 @@
           </nav>
         </header>
         <ul iterate="alerts">
-          <li class="alert">
-            <a class="title" lquery="(text title) (attr :href (monitor::alert-url alert))">Title</a>
+          <li class="alert" lquery="(add-class (when (monitor::alert-up-p *) :up))">
+            <a class="title" lquery="(text title) (attr :href (monitor::alert-url *))">Title</a>
             <a class="series" lquery="(text (clip (monitor::ensure-series *) :title)) (attr :href (monitor::series-url series))">Series</a>
-            <span class="subscriptions" lquery="(text (length (monitor::list-subscirptions *)))"></span>
+            <span class="subscriptions" lquery="(text (length (monitor::list-subscriptions *)))"></span>
           </li>
         </ul>
       </section>

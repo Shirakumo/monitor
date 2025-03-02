@@ -70,7 +70,7 @@
                          :title title
                          :duration (parse-float:parse-float (or* duration "0.0")))
               "Alert created."
-               "monitor/alerts"))
+               "monitor/"))
 
 (define-api monitor/alert/edit (alert &optional threshold title duration) (:access (perm monitor))
   (api-output* (edit-alert alert
@@ -84,7 +84,7 @@
   (remove-alert id)
   (api-output* NIL
                "Alert deleted."
-               "monitor/alerts"))
+               "monitor/"))
 
 (define-api monitor/alert/subscribe (id email &optional name) (:access (perm monitor))
   (let ((alert (ensure-alert id)))
