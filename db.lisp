@@ -124,7 +124,7 @@
       (setf (dm:field series "type") (measurement->id type))
       (setf (dm:field series "arguments") (prin1-to-string arguments))
       (dm:insert series)
-      (values series (load-measurement series)))))
+      (values series (perform-measurement (load-measurement series))))))
 
 (defun edit-series (series &key title interval arguments)
   (db:with-transaction ()

@@ -16,15 +16,15 @@
     <header>
       <h1><a @href="monitor/"><c:s>title</c:s></a></h1>
       <i class="fa-solid fa-bell"></i>
-      <h2><c:s>(or (clip alert :title) "New")</c:s></h2>
+      <h2><c:s>(or (clip alert :title) "New Alert")</c:s></h2>
     </header>
     <main>
       <c:using value="alert">
         <form id="alert">
           <input type="hidden" name="browser" value="true"/>
           <header>
-            <h3><i class="fa-solid fa-chart-line"></i>
-              <input type="text" name="title" lquery="(val title)" placeholder="Title" required /></h3>
+            <h3><i class="fa-solid fa-bell"></i>
+              <input type="text" name="title" lquery="(val title)" placeholder="Title" /></h3>
             <nav>
               <c:if test="(dm:hull-p *)">
                 <c:then>
@@ -53,7 +53,11 @@
             <input type="number" name="duration" id="duration" lquery="(val (float (or duration 60) 0f0))" min="1" step="1" required>
             <label for="duration">Threshold</label>
             <input type="number" name="threshold" id="threshold" lquery="(val (float (abs (or threshold 50)) 0f0))" min="0" step="0.1" required>
-            <input type="checkbox" name="above" id="above" lquery="(val (< 0.0 threshold))">
+            <label for="above">Trigger when</label>
+            <select name=above" id="above" lquery="(select (< 0 (or threshold 0)))">
+              <option value="T">above threshold</option>
+              <option value="NIL">below threshold</option>
+            </select>
           </div>
         </form>
       </c:using>
