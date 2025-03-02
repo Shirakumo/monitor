@@ -136,7 +136,7 @@ class Series{
                 {
                     scale: this.unit,
                     stroke: "white",
-                    splits: (this.unit === "%")? [0,25,50,75,100] : [1,32,1024,1024*32,1024*1024,1024*1024*32],
+                    splits: (this.unit === "%")? [0,25,50,75,100] : [1,32,1024,1024*32,1024*1024,1024*1024*32,1024*1024*1024],
                     filter: (u, v) => v,
                     values: (u, s) => s.map((v, i) => formatter(u, v)),
                 }
@@ -151,7 +151,7 @@ class Series{
                 },
                 "B": {
                     auto: false,
-                    range: [1, 1024*1024*32],
+                    range: [1, 1024*1024*1024],
                     distr: 3,
                     log: 2
                 }
