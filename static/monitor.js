@@ -16,8 +16,7 @@ let hashColor = (str)=>{
     let colors = ["0,63,92","47,75,124","102,81,145","160,81,149","212,80,135","249,93,106","255,124,67","255,166,0"];
     return colors[Math.abs(hash % colors.length)];
 };
-
-
+let defaultTimeRange = 60*60*12;
 
 class Series{
     constructor(element, options){
@@ -45,7 +44,7 @@ class Series{
         this.interval = interval;
         this.unit = unit;
         this.color = color;
-        this.last_check = universalTime() - (60*60*24);
+        this.last_check = universalTime() - defaultTimeRange;
         this.update().then(()=>{
             setInterval(()=>this.update(), Math.max(1000,Math.round(this.interval*1000)));
         });
