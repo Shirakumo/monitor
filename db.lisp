@@ -119,10 +119,10 @@
              (ensure-series (db:ensure-id series-ish) errorp))))
       (when errorp (error "No such series ~a" series-ish))))
 
-(defun add-series (type &key (title (string-downcase type)) (interval 1.0) arguments (machine (config :machine)))
+(defun add-series (type &key title (interval 1.0) arguments (machine (config :machine)))
   (db:with-transaction ()
     (let ((series (dm:hull 'series)))
-      (setf (dm:field series "title") title)
+      (setf (dm:field series "title") (or* title (format NIL "~(~a~) ~a" type machine)))
       (setf (dm:field series "interval") (float interval 1f0))
       (setf (dm:field series "type") (measurement->id type))
       (setf (dm:field series "arguments") (prin1-to-string arguments))
