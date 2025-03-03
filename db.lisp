@@ -128,7 +128,9 @@
       (setf (dm:field series "arguments") (prin1-to-string arguments))
       (setf (dm:field series "machine") machine)
       (dm:insert series)
-      (values series (perform-measurement (load-measurement series))))))
+      (load-measurement series)
+      (perform-measurement series)
+      series)))
 
 (defun edit-series (series &key title interval arguments machine)
   (db:with-transaction ()
