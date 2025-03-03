@@ -13,12 +13,13 @@
 (defun compile-alert-mail (subscriber &rest args &key (alert (ensure-alert subscriber)) datapoints (direction :trigger-up))
   (let* ((alert (ensure-alert alert))
          (title (dm:field alert "title"))
-         (series (dm:field (ensure-series alert) "title")))
+         (series (ensure-series alert)))
     (apply #'compile-mail
            subscriber
            :time (get-universal-time)
            :alert title
-           :series series
+           :series (dm:field series "title")
+           :machine (dm:field series "machine")
            :threshold (dm:field alert "threshold")
            :duration (dm:field alert "duration")
            :trigger-time (dm:field alert "trigger-time")
@@ -30,8 +31,8 @@
            :subject (ecase direction
                       (:trigger-up (format NIL "Alert for ~a!" title))
                       (:trigger-down (format NIL "Alert for ~a resolved" title)))
-           :series-url (series-url (dm:field alert "series"))
-           :alert-url (alert-url (dm:id alert))
+           :series-url (series-url series)
+           :alert-url (alert-url alert)
            args)))
 
 (defun extract-plaintext (html)

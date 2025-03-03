@@ -1,6 +1,6 @@
 <h1 lquery="(text subject)">Subject</h1>
 <p>
-  While tracking <c:s>series</c:s>, at <time lquery="(time time :fancy)" /> the threshold of <c:s>threshold</c:s> was no longer exceeded after <time lquery="(time (- time trigger-time) :relative)" />, which resolves this alert. The following are the last recorded measurements:
+  While tracking <c:s>series</c:s> on <c:s>machine</c:s>, at <time lquery="(time time :fancy)" /> the threshold of <c:s>threshold</c:s> was no longer exceeded after <time lquery="(time (- time trigger-time) :relative)" />, which resolves this alert. The following are the last recorded measurements:
 </p>
 <table>
   <thead>

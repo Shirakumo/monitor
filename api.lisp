@@ -17,8 +17,9 @@
 (define-api monitor/series/list () (:access (perm monitor))
   (api-output* (list-series)))
 
-(define-api monitor/series/new (type &optional title interval argument[]) (:access (perm monitor))
+(define-api monitor/series/new (type &optional machine title interval argument[]) (:access (perm monitor))
   (let ((series (add-series type :title (or* title (string-downcase type))
+                                 :machine (or* machine (config :machine))
                                  :interval (parse-float:parse-float (or* interval "1.0"))
                                  :arguments (loop for argument in argument[]
                                                   when (string/= "" argument)
@@ -27,8 +28,9 @@
                  "Series created."
                  "monitor/series/~a" (dm:field series "title"))))
 
-(define-api monitor/series/edit (id &optional title interval argument[]) (:access (perm monitor))
+(define-api monitor/series/edit (id &optional machine title interval argument[]) (:access (perm monitor))
   (let ((series (edit-series id :title (or* title)
+                                :machine (or* machine)
                                 :interval (if (or* interval) (parse-float:parse-float interval))
                                 :arguments (loop for argument in argument[]
                                                  when (string/= "" argument)

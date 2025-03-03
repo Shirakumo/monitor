@@ -50,6 +50,8 @@
             </div>
           </c:unless>
           <div class="settings">
+            <label for="machine">Machine</label>
+            <input type="text" name="machine" id="machine" lquery="(val machine) (attr :placeholder (mconfig :monitor :machine))" />
             <label for="type">Type</label>
             <select name="type" id="type" lquery="(select (if type (monitor::id->measurement type)))" iterate="(monitor::list-types)">
               <option lquery="(val (first *))">

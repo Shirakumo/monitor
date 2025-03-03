@@ -26,7 +26,7 @@
   (bt:interrupt-thread *task-runner* (lambda () (invoke-restart 'kill))))
 
 (defun run-tasks ()
-  (let* ((series (list-series))
+  (let* ((series (list-series :local T))
          (now (precise-time:get-precise-time/double))
          (interval (loop for s in series minimize (dm:field s "interval"))))
     (dolist (series series)
@@ -42,7 +42,7 @@
               (check-alert alert)))
           (sleep interval)
           ;; Refresh data
-          (let ((new-series (list-series)))
+          (let ((new-series (list-series :local T)))
             (dolist (s new-series (setf series new-series))
               (let ((prior (find (dm:id s) series :key #'dm:id)))
                 (setf (dm:field s 'last-check) (if prior (dm:field prior 'last-check) now)))))

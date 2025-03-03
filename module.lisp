@@ -11,4 +11,5 @@
 (define-trigger startup ()
   (defaulted-config (make-random-string 32) :private-key)
   (defaulted-config "Monitor" :title)
-  (defaulted-config "Shirakumo" :copyright))
+  (defaulted-config "Shirakumo" :copyright)
+  (defaulted-config (machine-instance) :machine))
