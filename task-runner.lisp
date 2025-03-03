@@ -11,8 +11,8 @@
            (with-simple-restart (kill "Kill the task runner")
              (unwind-protect
                   (handler-bind ((error (lambda (e)
-                                          (v:debug :monitor e)
-                                          (v:error :monitor "Error in task runner: ~a" e)
+                                          (l:debug :monitor e)
+                                          (l:error :monitor "Error in task runner: ~a" e)
                                           (maybe-invoke-debugger e 'continue))))
                     (run-tasks))
                (l:info :monitor "Stopping task runner.")

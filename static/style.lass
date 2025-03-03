@@ -48,6 +48,9 @@
  :display flex
  :flex-wrap wrap
  :justify-content space-around
+ ((:parent .up)
+  (header
+   :background (hex A00000)))
  (header 
   :width 100%
   :font-size 1.0em
@@ -93,6 +96,7 @@
  (.alert.up :background (hex A00000))
  (th :text-align left)
  ((:or th td) :padding 0.2em)
- (.status :width 2em)
+ (.status :width 2em :text-align center)
  (.series :width 10em)
+ (.threshold :width 5em)
  (.subscriptions :width 5em))

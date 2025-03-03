@@ -64,20 +64,20 @@
       (loop for i from 0
             for prev = NIL then cur
             for entry in sequence
-            for cur = (funcall check entry) 
+            for cur = (funcall check entry)
             do (cond ((and cur (null prev))
                       (setf current-start i))
                      ((and (null cur) prev)
                       (end-streak i)
                       (setf current-start most-positive-fixnum)))
-            finally (end-streak (length sequence))))
+            finally (when prev (end-streak (length sequence)))))
     (subseq sequence start end)))
 
 (defun get-alert-streak (alert)
   (let* ((alert (ensure-alert alert))
          (min (min (or (dm:field alert "last-check") 0d0)
                    (- (precise-time:get-precise-time/double)
-                      (dm:field alert "duration"))))
+                      (* 2 (dm:field alert "duration")))))
          (check (if (= 1 (float-sign (dm:field alert "threshold")))
                     (let ((lo-threshold (+ (dm:field alert "threshold"))))
                       (lambda (x) (<= lo-threshold (gethash "value" x))))
@@ -98,11 +98,11 @@
          (streak (get-alert-streak alert)))
     (setf (dm:field alert "last-check") (precise-time:get-precise-time/double))
     (when send
-      (cond ((and streak (< (or (dm:field alert "trigger-time") 0) 0))
+      (cond ((and streak (not (alert-up-p alert)))
              ;; We have a streak but our trigger is not set yet, so up it.
              (send-alerts alert streak :direction :trigger-up)
              (setf (dm:field alert "trigger-time") (precise-time:get-precise-time/double)))
-            ((and (not streak) (< 0 (or (dm:field alert "trigger-time") 0)))
+            ((and (not streak) (alert-up-p alert))
              ;; Streak has ended but our trigger is set, so down it.
              (send-alerts alert streak :direction :trigger-down)
              (setf (dm:field alert "trigger-time") -1d0))))

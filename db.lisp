@@ -218,7 +218,7 @@
 (defun remove-alert (alert)
   (let ((id (ensure-id alert)))
     (db:with-transaction ()
-      (db:remove 'alert/subscribers (db:query (:= 'alerts id)))
+      (db:remove 'alert/subscribers (db:query (:= 'alert id)))
       (db:remove 'alerts (db:query (:= '_id id))))))
 
 (defun list-subscriptions (alert)
