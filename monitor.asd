@@ -2,7 +2,7 @@
   :defsystem-depends-on (:radiance)
   :class "radiance:virtual-module"
   :serial T
-  :version "0.0.0"
+  :version "1.0.0"
   :components ((:file "module")
                (:file "db")
                (:file "alert")
