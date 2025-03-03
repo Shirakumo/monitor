@@ -17,6 +17,28 @@ let hashColor = (str)=>{
     return colors[Math.abs(hash % colors.length)];
 };
 let defaultTimeRange = 60*60*12;
+let formatPercentage = (s, v) => {
+    return v.toFixed(1) + "%";
+};
+let formatSeconds = (s, v) => {
+    if(v === null) return '';
+    if(v < 0) return Math.round(v*1000) + "ms";
+    if(v < 60) return v.toFixed(1) + "s";
+    v /= 60;
+    if(v < 60) return v.toFixed(1) + "m";
+    v /= 60;
+    return v.toFixed(1) + "h";
+};
+let formatBytes = (s, v) => {
+    if(v === null) return '';
+    if(v < 1024) return Math.round(v) + "B";
+    v /= 1024;
+    if(v < 1024) return Math.round(v) + "kB";
+    v /= 1024;
+    if(v < 1024) return Math.round(v) + "MB";
+    v /= 1024;
+    return Math.round(v) + "GB";
+};
 
 class Series{
     constructor(element, options){
@@ -97,17 +119,18 @@ class Series{
 
     initChart(){
         let formatter = (s, v) => v.toFixed(3);
-        if(this.unit === "%") formatter = (s, v) => v.toFixed(1) + "%";
-        if(this.unit === "s") formatter = (s, v) => v.toFixed(3) + "s";
-        if(this.unit === "B") formatter = (s, v) => {
-            if(v === null) return '';
-            if(v < 1024) return Math.round(v) + "B";
-            v /= 1024;
-            if(v < 1024) return Math.round(v) + "kB";
-            v /= 1024;
-            if(v < 1024) return Math.round(v) + "MB";
-            v /= 1024;
-            return Math.round(v) + "GB";
+        let splits = [];
+        if(this.unit === "%"){
+            formatter = formatPercentage;
+            splits = [0,25,50,75,100];
+        }
+        if(this.unit === "s"){
+            formatter = formatSeconds;
+            splits = [0.0,0.1,0.25,0.5,0.75,1.0];
+        }
+        if(this.unit === "B"){
+            formatter = formatBytes;
+            splits = [1,32,1024,1024*32,1024*1024,1024*1024*32,1024*1024*1024];
         }
         let opts = {
             width: 400,
@@ -135,7 +158,7 @@ class Series{
                 {
                     scale: this.unit,
                     stroke: "white",
-                    splits: (this.unit === "%")? [0,25,50,75,100] : [1,32,1024,1024*32,1024*1024,1024*1024*32,1024*1024*1024],
+                    splits: splits,
                     filter: (u, v) => v,
                     values: (u, s) => s.map((v, i) => formatter(u, v)),
                 }
