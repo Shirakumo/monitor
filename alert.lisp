@@ -1,6 +1,6 @@
 (in-package #:monitor)
 
-(defun compile-mail (subscriber &rest args)
+(defun compile-mail (subscriber &rest args &key &allow-other-keys)
   (apply #'r-clip:process
          (@template "email.ctml")
          :subscriber (dm:field subscriber "name")
@@ -8,13 +8,14 @@
          :copyright (config :copyright)
          :software-title (config :title)
          :software-version (load-time-value (asdf:component-version (asdf:find-system :monitor)))
-         :datapoints datapoints
          args))
 
-(defun compile-alert-mail (alert datapoints direction &rest args)
-  (let ((title (dm:field alert "title"))
-        (series (dm:field (ensure-series alert) "title")))
+(defun compile-alert-mail (subscriber &rest args &key (alert (ensure-alert subscriber)) datapoints (direction :trigger-up))
+  (let* ((alert (ensure-alert alert))
+         (title (dm:field alert "title"))
+         (series (dm:field (ensure-series alert) "title")))
     (apply #'compile-mail
+           subscriber
            :time (get-universal-time)
            :alert title
            :series series
@@ -27,8 +28,8 @@
                     (:trigger-up (@template "alert-up.ctml"))
                     (:trigger-down (@template "alert-down.ctml"))))
            :subject (ecase direction
-                      (:trigger-up (format NIL "Alert ~a" title))
-                      (:trigger-down (format NIL "Alert ~a resolved" title)))
+                      (:trigger-up (format NIL "Alert for ~a!" title))
+                      (:trigger-down (format NIL "Alert for ~a resolved" title)))
            :series-url (series-url (dm:field alert "series"))
            :alert-url (alert-url (dm:id alert))
            args)))

@@ -110,7 +110,7 @@
         You are receiving this email because you opted in via our website.<br>
       </div>
       <div class="copy">
-        Copyright © <span lquery="(time T :year)">20XX</span> <c:splice lquery="(text copyright)">Shirakumo</c:splice>
+        Copyright © <time lquery="(time T :year)">20XX</time> <c:splice lquery="(text copyright)">Shirakumo</c:splice>
       </div>
       <div class="software">
         Running on <a href="https://shirakumo.org/projects/monitor" target="_blank">Monitor <c:splice lquery="(text software-version)">0.0.0</c:splice></a>
