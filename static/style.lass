@@ -70,7 +70,10 @@
    :background (rgba 0 0 0 0.25)
    :font-size inherit
    :color inherit
-   :border none)))
+   :border none)
+  (ul
+   :list-style none
+   :margin 0 :padding 0)))
 
 (.series.widget
  :margin 1em

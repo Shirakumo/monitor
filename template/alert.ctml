@@ -58,6 +58,13 @@
               <option value="T">above threshold</option>
               <option value="NIL">below threshold</option>
             </select>
+            <label for="subscribers">Subscribers</label>
+            <ul id="subscribers">
+              <c:splice iterate="(** :subscriptions)">
+                <li><input type="text" name="subscribers[]" placeholder="Name <email>" lquery='(val (format NIL "~@[~a ~]<~a>" name email))' /></li>
+              </c:splice>
+              <li><input type="text" name="subscribers[]" placeholder="Name <email>"/></li>
+            </ul>
           </div>
         </form>
       </c:using>

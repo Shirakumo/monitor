@@ -192,7 +192,7 @@
              (ensure-alert (db:ensure-id alert-ish) errorp))))
       (when errorp (error "No such alert ~a" alert-ish))))
 
-(defun add-alert (series threshold &key title (duration 0.0) emails)
+(defun add-alert (series threshold &key title (duration 0.0) subscribers)
   (let ((alert (dm:hull 'alerts)))
     (setf (dm:field alert "series") (ensure-id series))
     (setf (dm:field alert "title") (or* title (dm:field (ensure-series series) "title")))
@@ -201,15 +201,23 @@
     (setf (dm:field alert "trigger-time") -1.0)
     (setf (dm:field alert "last-check") 0.0)
     (dm:insert alert)
-    (dolist (email emails alert)
-      (add-subscription alert email))))
+    (dolist (subscriber subscribers alert)
+      (destructuring-bind (&optional email name) (destructure-subscriber subscriber)
+        (when email
+          (add-subscription alert email name))))))
 
-(defun edit-alert (alert &key threshold title duration emails)
+(defun edit-alert (alert &key threshold title duration (subscribers NIL subscribers-p))
   (db:with-transaction ()
     (let ((alert (ensure-alert alert)))
       (when threshold (setf (dm:field alert "threshold") (float threshold 0f0)))
       (when duration (setf (dm:field alert "duration") (float duration 0f0)))
       (when (or* title) (setf (dm:field alert "title") title))
+      (when subscribers-p
+        (db:remove 'alert/subscribers (db:query (:= 'alert (dm:id alert))))
+        (dolist (subscriber subscribers alert)
+          (destructuring-bind (&optional email name) (destructure-subscriber subscriber)
+            (when email
+              (add-subscription alert email name)))))
       (dm:save alert))))
 
 (defun alert-up-p (alert)
@@ -225,7 +233,15 @@
   (dm:get 'alert/subscribers (db:query (:= 'alert (dm:id (ensure-alert alert))))
           :sort '(("name" :DESC))))
 
-(defun add-subscription (alert email &optional (name email))
+(defun destructure-subscriber (subscriber)
+  (let ((subscriber (string-trim " " subscriber)))
+    (when (string/= "" subscriber)
+      (or (cl-ppcre:register-groups-bind (name email) ("(.*?)<([^>]+)>" subscriber)
+            (let ((name (string-trim " " name)))
+              (list email (when (string/= "" name) name))))
+          (list subscriber)))))
+
+(defun add-subscription (alert email &optional name)
   (db:insert 'alert/subscribers `(("alert" . ,(ensure-id alert))
                                   ("name" . ,name)
                                   ("email" . ,(string-downcase email)))))

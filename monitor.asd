@@ -17,6 +17,7 @@
                :precise-time
                :fuzzy-dates
                :parse-float
+               :cl-ppcre
                :r-data-model
                :r-oauth
                :r-clip

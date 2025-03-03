@@ -65,23 +65,25 @@
 (define-api monitor/alert/list () (:access (perm monitor))
   (api-output* (list-alerts)))
 
-(define-api monitor/alert/new (series threshold &optional above title duration) (:access (perm monitor))
+(define-api monitor/alert/new (series threshold &optional above title duration subscribers[]) (:access (perm monitor))
   (api-output* (add-alert series (* (parse-float:parse-float threshold)
                                     (if (string-equal above "T") +1.0 -1.0))
                          :title title
-                         :duration (parse-float:parse-float (or* duration "0.0")))
+                         :duration (parse-float:parse-float (or* duration "0.0"))
+                         :subscribers subscribers[])
               "Alert created."
                "monitor/"))
 
-(define-api monitor/alert/edit (id &optional threshold above title duration) (:access (perm monitor))
+(define-api monitor/alert/edit (id &optional threshold above title duration subscribers[]) (:access (perm monitor))
   (api-output* (edit-alert id
                            :title (or* title)
                            :threshold (when (or* threshold)
                                         (* (parse-float:parse-float threshold)
                                            (if (string-equal above "T") +1.0 -1.0)))
-                           :duration (when (or* duration) (parse-float:parse-float duration)))
+                           :duration (when (or* duration) (parse-float:parse-float duration))
+                           :subscribers subscribers[])
                "Alert updated."
-               "monitor/alert/~d" id))
+               "monitor/alert/~a" id))
 
 (define-api monitor/alert/remove (id) (:access (perm monitor))
   (remove-alert id)
