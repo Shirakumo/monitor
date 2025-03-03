@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8"/>
-    <title><c:s>title</c:s> Dashboard</title>
+    <title>Dashboard <c:s>machine</c:s> <c:s>title</c:s></title>
     <meta name="robots" content="noindex, nofollow"/>
     <meta name="viewport" content="width=device-width"/>
     <link rel="stylesheet" @href="monitor/static/monitor/style.css"/>
@@ -14,7 +14,7 @@
   </head>
   <body>
     <header>
-      <h1><a @href="monitor/"><c:s>title</c:s></a></h1>
+      <h1><a @href="monitor/"><c:s>machine</c:s> <c:s>title</c:s></a></h1>
       <i class="fa-solid fa-gauge"></i>
       <h2>Dashboard</h2>
     </header>
@@ -70,7 +70,7 @@
       </section>
     </main>
     <footer>
-      &copy; <c:s>copyright</c:s> - Running on Monitor <c:s>software-version</c:s>
+      &copy; <c:s>copyright</c:s> - Running on <c:s>machine</c:s> / Monitor <c:s>software-version</c:s>
     </footer>
   </body>
 </html>
