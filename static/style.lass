@@ -34,7 +34,9 @@
   :justify-content center
   (* :margin-right 0.5em))
  (>main
-  :padding 1em)
+  :padding 1em
+  :display flex
+  :flex-wrap wrap)
  (>footer
   :text-align center
   :font-size 0.8em
@@ -48,9 +50,12 @@
  :display flex
  :flex-wrap wrap
  :justify-content space-around
+ :width (calc (- 50% 2em))
  ((:parent .up)
   (header
    :background (hex A00000)))
+ ((:parent .wide)
+  :width 100%)
  (header 
   :width 100%
   :font-size 1.0em
@@ -93,13 +98,13 @@
  (.uplot :margin 0.5em)
  (.u-legend :display none))
 
-(.alerts
+((:or .alerts .machines)
  :width 100%
  :margin 1em
  (.alert.up :background (hex A00000))
  (th :text-align left)
  ((:or th td) :padding 0.2em)
  (.status :width 2em :text-align center)
- (.series :width 10em)
+ (.series :width 5em)
  (.threshold :width 5em)
  (.subscriptions :width 5em))

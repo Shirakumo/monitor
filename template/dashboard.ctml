@@ -19,7 +19,7 @@
       <h2>Dashboard</h2>
     </header>
     <main>
-      <section id="series">
+      <section id="series" class="wide">
         <header>
           <h3><i class="fa-solid fa-chart-line"></i> Series</h3>
           <nav>
@@ -68,6 +68,31 @@
           </tbody>
         </table>
       </section>
+      <c:when test="machines">
+        <section id="machines">
+          <header>
+            <h3><i class="fa-solid fa-server"></i> Machines</h3>
+            <nav>
+            </nav>
+          </header>
+          <table class="machines">
+            <thead>
+              <tr>
+                <th class="status"></th>
+                <th class="title">Title</th>
+                <th class="series">Series</th>
+              </tr>
+            </thead>
+            <tbody iterate="machines">
+              <tr class="machine">
+                <td class="status"></td>
+                <td class="title"><a lquery="(text *) (attr :href (monitor::machine-url *))">Title</a></td>
+                <td class="series"></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </c:when>
     </main>
     <footer>
       &copy; <c:s>copyright</c:s> - Running on <c:s>machine</c:s> / Monitor <c:s>software-version</c:s>

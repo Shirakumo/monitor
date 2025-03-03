@@ -8,6 +8,10 @@
   (uri-to-url (format NIL "monitor/series/~a" (dm:field (ensure-series series) "title"))
               :representation :external))
 
+(defun machine-url (machine)
+  (uri-to-url (format NIL "monitor/machine/~a" machine)
+              :representation :external))
+
 (defun time? (var)
   (when (and var (string/= var ""))
     (org.shirakumo.fuzzy-dates:parse var)))
@@ -15,6 +19,7 @@
 (define-page dashboard "monitor/^$" (:access (perm monitor) :clip "dashboard.ctml")
   (r-clip:process T :series (list-series)
                     :alerts (list-alerts)
+                    :machines (list-machines)
                     :title (config :title)
                     :machine (config :machine)
                     :copyright (config :copyright)
@@ -45,3 +50,11 @@
                       :machine (config :machine)
                       :copyright (config :copyright)
                       :software-version (load-time-value (asdf:component-version (asdf:find-system :monitor))))))
+
+(define-page machine "monitor/^machine/(.*)$" (:uri-groups (machine) :access (perm monitor) :clip "dashboard.ctml")
+  (r-clip:process T :series (list-series :machine machine)
+                    :alerts (list-alerts :machine machine)
+                    :title (config :title)
+                    :machine (config :machine)
+                    :copyright (config :copyright)
+                    :software-version (load-time-value (asdf:component-version (asdf:find-system :monitor)))))

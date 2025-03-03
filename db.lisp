@@ -99,11 +99,15 @@
     (dm:data-model (dm:id thing))
     (T (db:ensure-id thing))))
 
-(defun list-series (&key local)
-  (dm:get 'series (if local
-                      (db:query (:= 'machine (config :machine)))
+(defun list-series (&key local (machine (if local (config :machine))))
+  (dm:get 'series (if machine
+                      (db:query (:= 'machine machine))
                       (db:query :all))
           :sort '(("title" :DESC))))
+
+(defun list-machines ()
+  (loop for row in (db:select 'series (db:query :all) :unique T :fields '("machine"))
+        collect (gethash "machine" row)))
 
 (defun ensure-series (series-ish &optional (errorp T))
   (or (typecase series-ish
@@ -182,8 +186,11 @@
       (values (gethash "value" value)
               (gethash "time" value)))))
 
-(defun list-alerts ()
-  (dm:get 'alerts (db:query :all) :sort '(("title" :DESC))))
+(defun list-alerts (&key local (machine (if local (config :machine))))
+  (if machine
+      (dm:get (rdb:join (alerts series) (series _id) :left) (db:query (:= 'machine machine)))
+      (dm:get 'alerts (db:query :all)
+              :sort '(("title" :DESC)))))
 
 (defun ensure-alert (alert-ish &optional (errorp T))
   (or (typecase alert-ish
