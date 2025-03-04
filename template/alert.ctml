@@ -20,12 +20,12 @@
     </header>
     <main>
       <c:using value="alert">
-        <form id="alert" lquery="(add-class (when (monitor::alert-up-p *) :up))">
+        <form id="alert" class="wide" lquery="(add-class (when (monitor::alert-up-p *) :up))">
           <input type="hidden" name="browser" value="true"/>
           <header>
             <h3><i class="fa-solid fa-bell"></i>
               <input type="text" name="title" lquery="(val title)" placeholder="Title" /></h3>
-            <nav>
+              <nav>
               <c:if test="(dm:hull-p *)">
                 <c:then>
                   <button @formaction="monitor/api/monitor/alert/new">
@@ -33,6 +33,9 @@
                   </button>
                 </c:then>
                 <c:else>
+                  <button @formaction="monitor/api/monitor/alert/test">
+                    <i class="fa-solid fa-paper-plane"></i> Test
+                  </button>
                   <button @formaction="monitor/api/monitor/alert/edit">
                     <i class="fa-solid fa-pen-to-square"></i> Edit
                   </button>

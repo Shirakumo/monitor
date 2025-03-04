@@ -106,3 +106,10 @@
     (api-output* NIL
                  "Subscription deleted."
                  "monitor/alert/~a" (dm:id alert))))
+
+(define-api monitor/alert/test (id) (:access (perm monitor))
+  (let ((alert (ensure-alert id)))
+    (send-alerts alert ())
+    (api-output* NIL
+                 "Alert sent."
+                 "monitor/alert/~a" (dm:id alert))))
