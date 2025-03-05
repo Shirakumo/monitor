@@ -1,0 +1,21 @@
+# About Monitor
+This is a resource monitoring solution for Radiance. It can observe various metrics about the machine it is running on and log them to a database, show a nice dashboard with graphs of the metrics, and send out email alerts in case a threshold should be reached.
+
+## Features
+- Monitoring of all metrics supported by ''machine-measurements''(https://shinmera.com/projects/machine-measurements)
+- Live display of metrics over time via a dashboard
+- Configurable measurement intervals
+- Configurable email alerts for all metrics
+- Support for multiple machines logging to the same database
+
+## Monitor Setup
+### Configuration Variables
+
+- ``:private-key`` A private key used for salting and so on
+- ``:title`` The title of the site. Defaults to ``Monitor``.
+- ``:copyright`` The copyright displayed on the site. Defaults to ``Shirakumo``.
+- ``:machine`` The name of the machine it is running on and logging metrics for. Defaults to ``(machine-instance)``.
+
+### Permissions
+
+- ``monitor`` Grants access to all monitoring management functionality
