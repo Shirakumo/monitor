@@ -45,7 +45,7 @@
             </nav>
           </header>
           <c:unless test="(dm:hull-p *)">
-            <div class="series widget wide" lquery="(data :series _id) (data :interval interval :unit (monitor::id->unit type))">
+            <div class="series widget wide" lquery="(data :series _id) (data :interval interval :unit (monitor::id->unit type) :type (monitor::id->type type))">
               <div class="placeholder">Loading data...</div>
             </div>
           </c:unless>

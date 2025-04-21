@@ -48,10 +48,12 @@ class Series{
         let id = options["series"];
         let interval = options["interval"];
         let unit = options["unit"];
+        let type = options["type"];
         let color = options["color"];
         if(id === undefined) id = element.dataset.series;
         if(interval === undefined) interval = element.dataset.interval;
         if(unit === undefined) unit = element.dataset.unit;
+        if(type === undefined) type = element.dataset.type;
         if(color === undefined) color = element.querySelector("header i") ? hashColor(element.querySelector("header i").getAttribute("class")) : "255,255,255";
 
         this.apiRoot = document.querySelector("head link[rel=api-root]").getAttribute("href");
@@ -65,6 +67,7 @@ class Series{
         this.element = element;
         this.interval = interval;
         this.unit = unit;
+        this.type = type;
         this.color = color;
         this.last_check = universalTime() - defaultTimeRange;
         this.update().then(()=>{
@@ -130,7 +133,12 @@ class Series{
         }
         if(this.unit === "B"){
             formatter = formatBytes;
-            splits = [1,32,1024,1024*32,1024*1024,1024*1024*32,1024*1024*1024];
+            if(["network-io", "network-read", "network-write",
+                "storage-io", "storage-read", "storage-write"].includes(this.type)){
+                splits = [1024,1024*32,1024*1024,1024*1024*32];
+            }else{
+                splits = [1,32,1024,1024*32,1024*1024,1024*1024*32,1024*1024*1024];
+            }
         }
         let opts = {
             width: 400,
@@ -173,7 +181,7 @@ class Series{
                 },
                 "B": {
                     auto: false,
-                    range: [1, 1024*1024*1024],
+                    range: [splits[0], splits[-1]],
                     distr: 3,
                     log: 2
                 }

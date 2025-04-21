@@ -27,7 +27,7 @@
           </nav>
         </header>
         <c:splice iterate="series">
-          <div class="series widget" lquery="(data :series _id) (data :interval interval :unit (monitor::id->unit type))">
+          <div class="series widget" lquery="(data :series _id) (data :interval interval :unit (monitor::id->unit type) :type (monitor::id->type type))">
             <header>
               <h4>
                 <i class="fa-solid" lquery="(add-class (monitor::id->icon type))"></i>

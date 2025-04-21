@@ -75,6 +75,9 @@
   (or (position type *series-type-map* :key #'first :test #'string-equal)
       (error "No such measurement type ~s" type)))
 
+(defun id->type (id)
+  (string-downcase (first (elt *series-type-map* id))))
+
 (defun id->measurement (id)
   (first (elt *series-type-map* id)))
 
