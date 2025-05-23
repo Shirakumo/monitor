@@ -123,22 +123,26 @@ class Series{
     initChart(){
         let formatter = (s, v) => v.toFixed(3);
         let splits = [];
-        if(this.unit === "%"){
+        switch(this.unit){
+        case "%":
             formatter = formatPercentage;
             splits = [0,25,50,75,100];
-        }
-        if(this.unit === "s"){
+            break;
+        case "s":
             formatter = formatSeconds;
             splits = [0.0,0.1,0.25,0.5,0.75,1.0];
-        }
-        if(this.unit === "B"){
+            break;
+        case "B":
             formatter = formatBytes;
             if(["network-io", "network-read", "network-write",
                 "storage-io", "storage-read", "storage-write"].includes(this.type)){
-                splits = [1024,1024*32,1024*1024,1024*1024*32];
-            }else{
-                splits = [1,32,1024,1024*32,1024*1024,1024*1024*32,1024*1024*1024];
-            }
+                    splits = [1024,1024*32,1024*1024,1024*1024*32];
+                }else{
+                    splits = [1,32,1024,1024*32,1024*1024,1024*1024*32,1024*1024*1024];
+                }
+            break;
+        default:
+            this.log("Unknown unit type:",this.unit);
         }
         let opts = {
             width: 400,
@@ -181,7 +185,7 @@ class Series{
                 },
                 "B": {
                     auto: false,
-                    range: [splits[0], splits[-1]],
+                    range: [splits[0], splits[splits.length-1]],
                     distr: 3,
                     log: 2
                 }
