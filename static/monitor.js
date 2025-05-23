@@ -235,10 +235,11 @@ class Series{
     }
 }
 
+var series = [];
 let initMonitors = ()=>{
     log("Init");
     for(let el of document.querySelectorAll(".series.widget")){
-        new Series(el);
+        series.push(new Series(el));
     }
 };
 
